@@ -4,10 +4,10 @@ import (
 	"slices"
 	"strings"
 
-	"aplicacion.go/consola"
-	"aplicacion.go/consola/cadena"
-	"aplicacion.go/consola/color"
-	"aplicacion.go/utiles"
+	"github.com/hernanatn/aplicacion.go/consola"
+	"github.com/hernanatn/aplicacion.go/consola/cadena"
+	"github.com/hernanatn/aplicacion.go/consola/color"
+	"github.com/hernanatn/aplicacion.go/utiles"
 )
 
 type Consola = consola.Consola

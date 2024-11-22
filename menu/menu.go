@@ -3,11 +3,11 @@ package menu
 import (
 	"errors"
 
-	"aplicacion.go/comando"
-	"aplicacion.go/consola"
-	"aplicacion.go/consola/cadena"
-	"aplicacion.go/consola/color"
-	"aplicacion.go/consola/teclado"
+	"github.com/hernanatn/aplicacion.go/comando"
+	"github.com/hernanatn/aplicacion.go/consola"
+	"github.com/hernanatn/aplicacion.go/consola/cadena"
+	"github.com/hernanatn/aplicacion.go/consola/color"
+	"github.com/hernanatn/aplicacion.go/consola/teclado"
 )
 
 type AccionMenu = comando.AccionComando

@@ -2,8 +2,8 @@ package aplicacion_test
 
 /*
 	"bufio"
-	"aplicacion.go/fuente/aplicacion"
-	"aplicacion.go/fuente/aplicacion/comando"
+	"github.com/hernanatn/aplicacion.go/fuente/aplicacion"
+	"github.com/hernanatn/aplicacion.go/fuente/aplicacion/comando"
 	"fmt"
 	"os"
 	"testing"

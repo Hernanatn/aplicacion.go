@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"aplicacion.go/consola/color"
+	"github.com/hernanatn/aplicacion.go/consola/color"
 )
 
 // Alias de string con métodos de formato útiles para consolas.

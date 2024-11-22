@@ -11,7 +11,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"aplicacion.go/consola/cadena"
+	"github.com/hernanatn/aplicacion.go/consola/cadena"
 
 	"github.com/schollz/progressbar/v3"
 	"golang.org/x/term"

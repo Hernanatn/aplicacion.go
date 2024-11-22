@@ -1,4 +1,4 @@
-module aplicacion.go
+module github.com/hernanatn/aplicacion.go
 
 go 1.22.5
 
