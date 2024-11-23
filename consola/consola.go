@@ -59,6 +59,9 @@ type Consola interface {
 	ImprimirSeparador()
 	EscribirBytes([]byte) error
 	EsTerminal() bool
+
+	FSalida() *os.File
+	FEntrada() *os.File
 }
 
 type Parametros map[string]any
@@ -299,9 +302,16 @@ func (e Entrada) Fd() uintptr {
 	return e.f.Fd()
 }
 
-func (e consola) Read(p []byte) (n int, err error) {
-	return e.Entrada.Read(p)
+func (c consola) Read(p []byte) (n int, err error) {
+	return c.Entrada.Read(p)
 }
-func (s consola) Write(p []byte) (n int, err error) {
-	return s.Salida.Write(p)
+func (c consola) Write(p []byte) (n int, err error) {
+	return c.Salida.Write(p)
+}
+
+func (c consola) FEntrada() *os.File {
+	return c.Entrada.f
+}
+func (c consola) FSalida() *os.File {
+	return c.Salida.f
 }

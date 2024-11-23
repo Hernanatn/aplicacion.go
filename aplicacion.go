@@ -389,3 +389,10 @@ func (a aplicacion) EscribirBytes(b []byte) error {
 func (a aplicacion) EsTerminal() bool {
 	return a.consola.EsTerminal()
 }
+
+func (a aplicacion) FEntrada() *os.File {
+	return a.consola.FEntrada()
+}
+func (a aplicacion) FSalida() *os.File {
+	return a.consola.FSalida()
+}
