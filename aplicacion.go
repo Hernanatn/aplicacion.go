@@ -194,6 +194,13 @@ func (a aplicacion) Leer(c Cadena) (Cadena, error) {
 	return a.consola.Leer(c)
 }
 
+func (e aplicacion) Read(p []byte) (n int, err error) {
+	return e.consola.Read(p)
+}
+func (s aplicacion) Write(p []byte) (n int, err error) {
+	return s.consola.Write(p)
+}
+
 /*
 	func (a aplicacion) Escribir(c Cadena) error {
 		_, err := a.salida.WriteString(c.S())

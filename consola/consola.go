@@ -7,6 +7,7 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"strings"
@@ -41,6 +42,7 @@ type EntradaSalida struct {
 }
 
 type Consola interface {
+	io.ReadWriter
 	Leer(Cadena) (Cadena, error)
 	LeerContraseña(Cadena) (Cadena, error)
 	LeerTecla(*[]byte) (int, error)
@@ -295,4 +297,11 @@ func (s Salida) Fd() uintptr {
 
 func (e Entrada) Fd() uintptr {
 	return e.f.Fd()
+}
+
+func (e consola) Read(p []byte) (n int, err error) {
+	return e.Entrada.Read(p)
+}
+func (s consola) Write(p []byte) (n int, err error) {
+	return s.Salida.Write(p)
 }
