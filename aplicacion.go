@@ -292,7 +292,8 @@ func (a *aplicacion) Correr(args ...string) (r any, err error) {
 			continue
 		case !existe:
 			a.ImprimirCadena(Cadena(cadena.Error(fmt.Sprintf("Se intento ejecutar el comando: %s. Pero el comando no existe", nombreComando), nil)))
-			return nil, *new(error)
+			a.Ayuda(a)
+			return nil, nil
 		}
 		var cod comando.CodigoError
 		res, cod, err = com.Ejecutar(a, opciones...)
