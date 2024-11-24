@@ -92,6 +92,8 @@ func (a aplicacion) TextoAyuda() string {
 }
 
 func (a *aplicacion) Ayuda(_ Consola, args ...string) {
+	a.ImprimirCadena(Cadena(cadena.Titulo(a.Nombre)))
+	a.ImprimirCadena(Cadena(cadena.Subtitulo(a.Descripcion)))
 	a.consola.EscribirLinea(Cadena("Ayuda").Negrita().Subrayada())
 	a.consola.EscribirLinea(Cadena("Comandos:"))
 	for _, c := range a.comandos {
@@ -258,8 +260,6 @@ func (a *aplicacion) Correr(args ...string) (r any, err error) {
 		a.ImprimirLinea(cadena.Cadena("\n" + cadena.Error("Programa terminado por el usuario: [CTRL+C]", nil)))
 		os.Exit(1)
 	}()
-	a.ImprimirCadena(Cadena(cadena.Titulo(a.Nombre)))
-	a.ImprimirCadena(Cadena(cadena.Subtitulo(a.Descripcion)))
 	err = a.Inicializar(args...)
 	if err != nil {
 		a.Limpiar(args...)
