@@ -64,7 +64,7 @@ type aplicacion struct {
 	Nombre      string
 	Uso         string
 	Descripcion string
-	Accion      comando.AccionComando
+	accion      comando.AccionComando
 	Opciones    []string
 
 	consola    Consola
@@ -172,11 +172,11 @@ func (a *aplicacion) Ejecutar(_ Consola, opciones ...string) (res any, cod coman
 		}
 	}
 	parametros, banderas := a.DescifrarOpciones(opciones)
-	if a.Accion == nil {
+	if a.accion == nil {
 		a.Ayuda(a)
 		return nil, comando.EXITO, nil
 	}
-	return a.Accion.Ejecutar(a, parametros, banderas...)
+	return a.accion.Ejecutar(a, parametros, banderas...)
 }
 
 func (a *aplicacion) RegistrarInicio(f FUN) Aplicacion {

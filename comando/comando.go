@@ -55,10 +55,10 @@ type comando struct {
 	Aliases     []string
 	Uso         string
 	Descripcion string
-	Accion      AccionComando
 	Opciones    []string
 	Oculto      bool
 
+	accion   AccionComando
 	comandos []Comando
 	padre    Comando
 }
@@ -146,11 +146,11 @@ func (c *comando) Ejecutar(consola Consola, opciones ...string) (res any, cod Co
 		}
 	}
 	parametros, banderas := c.DescifrarOpciones(opciones)
-	if c.Accion == nil {
+	if c.accion == nil {
 		c.Ayuda(consola)
 		return nil, EXITO, nil
 	}
-	return c.Accion.Ejecutar(consola, parametros, banderas...)
+	return c.accion.Ejecutar(consola, parametros, banderas...)
 }
 
 func (c comando) EsOculto() bool {
@@ -181,7 +181,7 @@ func NuevoComando(nombre string, uso string, aliases []string, descripcion strin
 		Nombre:      nombre,
 		Uso:         uso,
 		Aliases:     aliases,
-		Accion:      accion,
+		accion:      accion,
 		Descripcion: descripcion,
 		Opciones:    opciones,
 		Oculto:      cfg.EsOculto,
