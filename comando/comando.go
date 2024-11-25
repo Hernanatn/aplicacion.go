@@ -13,17 +13,10 @@ import (
 type Consola = consola.Consola
 type Cadena = consola.Cadena
 
+type Opciones = consola.Opciones
 type Parametros = consola.Parametros
 
-type AccionComando interface {
-	Ejecutar(consola Consola, parametros Parametros, opciones ...string) (res any, cod CodigoError, err error)
-}
-
-type Accion func(consola Consola, parametros Parametros, opciones ...string) (res any, cod CodigoError, err error)
-
-func (f Accion) Ejecutar(consola Consola, parametros Parametros, opciones ...string) (res any, cod CodigoError, err error) {
-	return f(consola, parametros, opciones...)
-}
+type Accion func(consola Consola, opciones Opciones, parametros Parametros, argumentos ...any) (res any, cod CodigoError, err error)
 
 type CodigoError int
 
@@ -58,13 +51,9 @@ type comando struct {
 	Opciones    []string
 	Oculto      bool
 
-	accion   AccionComando
+	accion   Accion
 	comandos []Comando
 	padre    Comando
-}
-
-type TComando struct {
-	*comando
 }
 
 func (c comando) TextoAyuda() string {
@@ -150,7 +139,7 @@ func (c *comando) Ejecutar(consola Consola, opciones ...string) (res any, cod Co
 		c.Ayuda(consola)
 		return nil, EXITO, nil
 	}
-	return c.accion.Ejecutar(consola, parametros, banderas...)
+	return c.accion(consola, banderas, parametros)
 }
 
 func (c comando) EsOculto() bool {
@@ -168,7 +157,7 @@ func (c comando) DevolverAliases() []string {
 	return c.Aliases
 }
 
-func NuevoComando(nombre string, uso string, aliases []string, descripcion string, accion AccionComando, opciones []string, config ...Config) Comando {
+func NuevoComando(nombre string, uso string, aliases []string, descripcion string, accion Accion, opciones []string, config ...Config) Comando {
 
 	cfg := Config{
 		EsOculto: false,

@@ -24,8 +24,7 @@ type CodigoError = comando.CodigoError
 type Parametros = comando.Parametros
 type Comando = comando.Comando
 type Accion = comando.Accion
-type AccionComando = comando.AccionComando
-type AccionMenu = menu.AccionMenu
+
 type Menu = menu.Menu
 type OpcionMenu = menu.Opcion
 
@@ -64,7 +63,7 @@ type aplicacion struct {
 	Nombre      string
 	Uso         string
 	Descripcion string
-	accion      comando.AccionComando
+	accion      comando.Accion
 	Opciones    []string
 
 	consola    Consola
@@ -176,7 +175,7 @@ func (a *aplicacion) Ejecutar(_ Consola, opciones ...string) (res any, cod coman
 		a.Ayuda(a)
 		return nil, comando.EXITO, nil
 	}
-	return a.accion.Ejecutar(a, parametros, banderas...)
+	return a.accion(a, banderas, parametros)
 }
 
 func (a *aplicacion) RegistrarInicio(f FUN) Aplicacion {
@@ -332,7 +331,7 @@ func NuevaAplicacion(nombre string, uso string, descripcion string, opciones []s
 			[]string{"-a", "-h"},
 			"Imprime la ayuda.",
 			comando.Accion(
-				func(con Consola, parametros comando.Parametros, opciones ...string) (res any, cod comando.CodigoError, err error) {
+				func(con Consola, opciones comando.Opciones, parametros comando.Parametros, argumentos ...any) (res any, cod comando.CodigoError, err error) {
 					a.Ayuda(con, opciones...)
 					return nil, comando.EXITO, nil
 				}),
@@ -344,7 +343,7 @@ func NuevaAplicacion(nombre string, uso string, descripcion string, opciones []s
 			[]string{},
 			"Cierra el programa.",
 			comando.Accion(
-				func(con Consola, parametros comando.Parametros, opciones ...string) (res any, cod comando.CodigoError, err error) {
+				func(con Consola, opciones comando.Opciones, parametros comando.Parametros, argumentos ...any) (res any, cod comando.CodigoError, err error) {
 					a.debeCerrar = true
 					return nil, comando.EXITO, nil
 				}),

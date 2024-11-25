@@ -21,6 +21,9 @@ import (
 type Cadena = cadena.Cadena
 type Progreso = progressbar.ProgressBar
 
+type Parametros = map[string]any
+type Opciones = []string
+
 // Entrada es un *bufio.Reader que guarda una referencia al *os.File subyacente utilzado para constuir el Reader, junto con una bandera que determina si ese File es una terminal.
 // Implementa una serie de métodos como comodidades para leer desde ese Reader:
 type Entrada struct {
@@ -63,8 +66,6 @@ type Consola interface {
 	FSalida() *os.File
 	FEntrada() *os.File
 }
-
-type Parametros map[string]any
 
 type consola struct {
 	EntradaSalida
