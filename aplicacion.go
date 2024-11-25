@@ -24,8 +24,6 @@ type CodigoError = comando.CodigoError
 type Opciones = comando.Opciones
 type Parametros = comando.Parametros
 
-type Comando = comando.Comando
-
 type Menu = menu.Menu
 
 const (
@@ -38,9 +36,9 @@ var (
 	NuevoMenu    = menu.NuevoMenu
 )
 
-type Aplicacion interface {
+type Aplicacion[T any] interface {
 	Consola
-	Comando
+	comando.Comando[T]
 
 	Correr(args ...string) (r any, err error)
 
@@ -50,10 +48,10 @@ type Aplicacion interface {
 
 	Leer(Cadena) (Cadena, error)
 
-	RegistrarInicio(f FUN) Aplicacion
-	RegistrarLimpieza(f FUN) Aplicacion
-	RegistrarFinal(f FUN) Aplicacion
-	RegistrarComando(Comando) Aplicacion
+	RegistrarInicio(f FUN[T]) Aplicacion[T]
+	RegistrarLimpieza(f FUN[T]) Aplicacion[T]
+	RegistrarFinal(f FUN[T]) Aplicacion[T]
+	RegistrarComando(comando.Comando[T]) Aplicacion[T]
 
 	DebeCerrar() bool
 }
@@ -66,14 +64,14 @@ type aplicacion[T any] struct {
 	Opciones    []string
 
 	consola    Consola
-	comandos   []Comando
+	comandos   []comando.Comando[T]
 	debeCerrar bool
-	ini        FUN
-	lim        FUN
-	fin        FUN
+	ini        FUN[T]
+	lim        FUN[T]
+	fin        FUN[T]
 }
 
-type FUN func(c Aplicacion, args ...string) error
+type FUN[T any] func(c Aplicacion[T], args ...string) error
 
 func (a *aplicacion[T]) Inicializar(args ...string) error {
 	return a.ini(a, args...)
@@ -119,13 +117,13 @@ func (a aplicacion[T]) DevolverAliases() []string {
 	return []string{a.Nombre}
 }
 
-func (a *aplicacion[T]) RegistrarComando(sub Comando) Aplicacion {
+func (a *aplicacion[T]) RegistrarComando(sub comando.Comando[T]) Aplicacion[T] {
 	sub.AsignarPadre(a)
 	a.comandos = append(a.comandos, sub)
 	return a
 }
 
-func (a aplicacion[T]) buscarComando(nombre string) (Comando, bool) {
+func (a aplicacion[T]) buscarComando(nombre string) (comando.Comando[T], bool) {
 	for _, a := range a.comandos {
 		if a.DevolverNombre() == nombre || slices.Contains(a.DevolverAliases(), nombre) {
 			return a, true
@@ -134,7 +132,7 @@ func (a aplicacion[T]) buscarComando(nombre string) (Comando, bool) {
 	return nil, false // [HACER] MEJORAR RETORNO...
 }
 
-func (a *aplicacion[T]) AsignarPadre(Comando) {}
+func (a *aplicacion[T]) AsignarPadre(comando.Comando[T]) {}
 func (a aplicacion[T]) DescifrarOpciones(opciones []string) (comando.Parametros, []string) {
 	parametros := make(comando.Parametros)
 	banderas := make([]string, 0)
@@ -161,7 +159,7 @@ func (a aplicacion[T]) DescifrarOpciones(opciones []string) (comando.Parametros,
 	return parametros, banderas
 }
 
-func (a *aplicacion[T]) Ejecutar(_ Consola, opciones ...string) (res any, cod comando.CodigoError, err error) {
+func (a *aplicacion[T]) Ejecutar(_ Consola, opciones ...string) (res T, cod comando.CodigoError, err error) {
 
 	if len(opciones) > 1 {
 		sc, existe := a.buscarComando(opciones[1])
@@ -172,21 +170,21 @@ func (a *aplicacion[T]) Ejecutar(_ Consola, opciones ...string) (res any, cod co
 	parametros, banderas := a.DescifrarOpciones(opciones)
 	if a.accion == nil {
 		a.Ayuda(a)
-		return nil, comando.EXITO, nil
+		return *new(T), comando.EXITO, nil
 	}
 	return a.accion(a, banderas, parametros)
 }
 
-func (a *aplicacion[T]) RegistrarInicio(f FUN) Aplicacion {
-	a.ini = FUN(f)
+func (a *aplicacion[T]) RegistrarInicio(f FUN[T]) Aplicacion[T] {
+	a.ini = FUN[T](f)
 	return a
 }
-func (a *aplicacion[T]) RegistrarLimpieza(f FUN) Aplicacion {
-	a.lim = FUN(f)
+func (a *aplicacion[T]) RegistrarLimpieza(f FUN[T]) Aplicacion[T] {
+	a.lim = FUN[T](f)
 	return a
 }
-func (a *aplicacion[T]) RegistrarFinal(f FUN) Aplicacion {
-	a.fin = FUN(f)
+func (a *aplicacion[T]) RegistrarFinal(f FUN[T]) Aplicacion[T] {
+	a.fin = FUN[T](f)
 	return a
 }
 
@@ -281,7 +279,7 @@ func (a *aplicacion[T]) Correr(args ...string) (r any, err error) {
 		}
 
 		argumentos := strings.Split(entrada.Limpiar().S(), " ")
-		var com Comando
+		var com comando.Comando[T]
 		nombreComando := argumentos[0]
 		com, existe := a.buscarComando(nombreComando)
 		opciones := argumentos[1:]
@@ -313,7 +311,7 @@ func (a *aplicacion[T]) Correr(args ...string) (r any, err error) {
 	return res, nil
 }
 
-func NuevaAplicacion[T any](nombre string, uso string, descripcion string, opciones []string, consola Consola) Aplicacion {
+func NuevaAplicacion[T any](nombre string, uso string, descripcion string, opciones []string, consola Consola) Aplicacion[T] {
 
 	a := &aplicacion[T]{
 		Nombre:      nombre,
@@ -324,28 +322,23 @@ func NuevaAplicacion[T any](nombre string, uso string, descripcion string, opcio
 	}
 
 	a.RegistrarComando(
-		comando.NuevoComando(
+		comando.NuevoComando[T](
 			"ayuda",
 			"ayuda",
 			[]string{"-a", "-h"},
 			"Imprime la ayuda.",
-			comando.Accion[any](
-				func(con Consola, opciones comando.Opciones, parametros comando.Parametros, argumentos ...any) (res any, cod comando.CodigoError, err error) {
+			comando.AccionImprimibleNula[T](
+				func(con Consola) {
 					a.Ayuda(con, opciones...)
-					return nil, comando.EXITO, nil
 				}),
 			[]string{}))
 	a.RegistrarComando(
-		comando.NuevoComando(
+		comando.NuevoComando[T](
 			"chau",
 			"chau",
 			[]string{},
 			"Cierra el programa.",
-			comando.Accion[any](
-				func(con Consola, opciones comando.Opciones, parametros comando.Parametros, argumentos ...any) (res any, cod comando.CodigoError, err error) {
-					a.debeCerrar = true
-					return nil, comando.EXITO, nil
-				}),
+			comando.AccionNula[T](func() { a.debeCerrar = true }),
 			[]string{},
 			comando.Config{
 				EsOculto: true,

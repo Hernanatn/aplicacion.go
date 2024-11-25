@@ -25,15 +25,15 @@ const (
 	ERROR CodigoError = -1
 )
 
-type Comando interface {
-	Ejecutar(consola Consola, opciones ...string) (res any, cod CodigoError, err error)
+type Comando[T any] interface {
+	Ejecutar(consola Consola, opciones ...string) (res T, cod CodigoError, err error)
 
 	Ayuda(con Consola, args ...string)
 	TextoAyuda() string
 
 	DescifrarOpciones(opciones []string) (Parametros, []string)
 
-	AsignarPadre(Comando)
+	AsignarPadre(Comando[T])
 	EsOculto() bool
 
 	DevolverNombre() string
@@ -52,8 +52,8 @@ type comando[T any] struct {
 	Oculto      bool
 
 	accion   Accion[T]
-	comandos []Comando
-	padre    Comando
+	comandos []Comando[T]
+	padre    Comando[T]
 }
 
 func (c comando[T]) TextoAyuda() string {
@@ -80,17 +80,17 @@ func (c comando[T]) Ayuda(con Consola, args ...string) {
 	con.Imprimir()
 }
 
-func (c *comando[T]) RegistrarComando(sub Comando) Comando {
+func (c *comando[T]) RegistrarComando(sub Comando[T]) Comando[T] {
 	sub.AsignarPadre(c)
 	c.comandos = append(c.comandos, sub)
 	return c
 }
 
-func (c *comando[T]) AsignarPadre(p Comando) {
+func (c *comando[T]) AsignarPadre(p Comando[T]) {
 	c.padre = p
 }
 
-func (c *comando[T]) buscarSubComando(nombre string) (Comando, bool) {
+func (c *comando[T]) buscarSubComando(nombre string) (Comando[T], bool) {
 	for _, c := range c.comandos {
 		if c.DevolverNombre() == nombre || slices.Contains(c.DevolverAliases(), nombre) {
 			return c, true
@@ -126,7 +126,7 @@ func (c *comando[T]) DescifrarOpciones(opciones []string) (Parametros, []string)
 	return parametros, banderas
 }
 
-func (c *comando[T]) Ejecutar(consola Consola, opciones ...string) (res any, cod CodigoError, err error) {
+func (c *comando[T]) Ejecutar(consola Consola, opciones ...string) (res T, cod CodigoError, err error) {
 
 	if len(opciones) > 0 {
 		sc, existe := c.buscarSubComando(opciones[0])
@@ -137,7 +137,7 @@ func (c *comando[T]) Ejecutar(consola Consola, opciones ...string) (res any, cod
 	parametros, banderas := c.DescifrarOpciones(opciones)
 	if c.accion == nil {
 		c.Ayuda(consola)
-		return nil, EXITO, nil
+		return *new(T), EXITO, nil
 	}
 	return c.accion(consola, banderas, parametros)
 }
@@ -157,7 +157,7 @@ func (c comando[T]) DevolverAliases() []string {
 	return c.Aliases
 }
 
-func NuevoComando[T any](nombre string, uso string, aliases []string, descripcion string, accion Accion[T], opciones []string, config ...Config) Comando {
+func NuevoComando[T any](nombre string, uso string, aliases []string, descripcion string, accion Accion[T], opciones []string, config ...Config) Comando[T] {
 
 	cfg := Config{
 		EsOculto: false,
@@ -177,10 +177,29 @@ func NuevoComando[T any](nombre string, uso string, aliases []string, descripcio
 	}
 }
 
+func AccionNula[R any](f func()) Accion[R] {
+	return Accion[R](func(consola consola.Consola, opciones []string, parametros map[string]any, argumentos ...any) (res R, cod CodigoError, err error) {
+		f()
+		return *new(R), EXITO, nil
+	})
+}
 func AccionSimple[R any](f func() (res R)) Accion[R] {
 	return Accion[R](func(consola consola.Consola, opciones []string, parametros map[string]any, argumentos ...any) (res R, cod CodigoError, err error) {
 		r := f()
 		return r, EXITO, nil
+	})
+}
+
+func AccionImprimibleSimple[R any](f func(con Consola) (res R)) Accion[R] {
+	return Accion[R](func(consola consola.Consola, opciones []string, parametros map[string]any, argumentos ...any) (res R, cod CodigoError, err error) {
+		r := f(consola)
+		return r, EXITO, nil
+	})
+}
+func AccionImprimibleNula[R any](f func(con Consola)) Accion[R] {
+	return Accion[R](func(consola consola.Consola, opciones []string, parametros map[string]any, argumentos ...any) (res R, cod CodigoError, err error) {
+		f(consola)
+		return *new(R), EXITO, nil
 	})
 }
 
