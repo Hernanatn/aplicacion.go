@@ -14,7 +14,7 @@ type Accion = comando.Accion
 
 type Opcion struct {
 	Nombre string
-	accion Accion
+	Accion Accion
 }
 
 type Menu struct {
@@ -131,8 +131,4 @@ func (m *Menu) Correr() (*Opcion, error) {
 		m.renderizar()
 	}
 	return opcionRelevante, errors.Join(errores...)
-}
-
-func (m Opcion) Accion() Accion {
-	return m.accion
 }
