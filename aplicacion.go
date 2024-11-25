@@ -21,9 +21,10 @@ import (
 type Cadena = comando.Cadena
 type Consola = comando.Consola
 type CodigoError = comando.CodigoError
+type Opciones = comando.Opciones
 type Parametros = comando.Parametros
-type Comando = comando.Comando
 type Accion = comando.Accion
+type Comando = comando.Comando
 
 type Menu = menu.Menu
 type OpcionMenu = menu.Opcion
