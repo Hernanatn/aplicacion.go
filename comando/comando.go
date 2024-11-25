@@ -16,7 +16,7 @@ type Cadena = consola.Cadena
 type Opciones = consola.Opciones
 type Parametros = consola.Parametros
 
-type Accion func(consola Consola, opciones Opciones, parametros Parametros, argumentos ...any) (res any, cod CodigoError, err error)
+type Accion[R any] func(consola Consola, opciones Opciones, parametros Parametros, argumentos ...any) (res R, cod CodigoError, err error)
 
 type CodigoError int
 
@@ -43,7 +43,7 @@ type Comando interface {
 type Config struct {
 	EsOculto bool
 }
-type comando struct {
+type comando[T any] struct {
 	Nombre      string
 	Aliases     []string
 	Uso         string
@@ -51,17 +51,17 @@ type comando struct {
 	Opciones    []string
 	Oculto      bool
 
-	accion   Accion
+	accion   Accion[T]
 	comandos []Comando
 	padre    Comando
 }
 
-func (c comando) TextoAyuda() string {
+func (c comando[T]) TextoAyuda() string {
 	nombre := c.Nombre + " (" + strings.Join(c.Aliases, ",") + ") "
 	return nombre + cadena.TextoJustificado(c.Descripcion, 40, cadena.OpcionesFormato{Sangria: strings.Repeat(" ", 40-len(nombre)-2), Prefijo: strings.Repeat(" ", 40), Color: color.GrisFuente}) + "\n"
 }
 
-func (c comando) Ayuda(con Consola, args ...string) {
+func (c comando[T]) Ayuda(con Consola, args ...string) {
 	con.EscribirLinea(Cadena("Ayuda").Negrita().Subrayada())
 	con.EscribirLinea("Comandos:")
 
@@ -80,17 +80,17 @@ func (c comando) Ayuda(con Consola, args ...string) {
 	con.Imprimir()
 }
 
-func (c *comando) RegistrarComando(sub Comando) Comando {
+func (c *comando[T]) RegistrarComando(sub Comando) Comando {
 	sub.AsignarPadre(c)
 	c.comandos = append(c.comandos, sub)
 	return c
 }
 
-func (c *comando) AsignarPadre(p Comando) {
+func (c *comando[T]) AsignarPadre(p Comando) {
 	c.padre = p
 }
 
-func (c *comando) buscarSubComando(nombre string) (Comando, bool) {
+func (c *comando[T]) buscarSubComando(nombre string) (Comando, bool) {
 	for _, c := range c.comandos {
 		if c.DevolverNombre() == nombre || slices.Contains(c.DevolverAliases(), nombre) {
 			return c, true
@@ -99,7 +99,7 @@ func (c *comando) buscarSubComando(nombre string) (Comando, bool) {
 	return nil, false // [HACER] MEJORAR RETORNO...
 }
 
-func (c *comando) DescifrarOpciones(opciones []string) (Parametros, []string) {
+func (c *comando[T]) DescifrarOpciones(opciones []string) (Parametros, []string) {
 	parametros := make(Parametros)
 	banderas := make([]string, 0)
 
@@ -126,7 +126,7 @@ func (c *comando) DescifrarOpciones(opciones []string) (Parametros, []string) {
 	return parametros, banderas
 }
 
-func (c *comando) Ejecutar(consola Consola, opciones ...string) (res any, cod CodigoError, err error) {
+func (c *comando[T]) Ejecutar(consola Consola, opciones ...string) (res any, cod CodigoError, err error) {
 
 	if len(opciones) > 0 {
 		sc, existe := c.buscarSubComando(opciones[0])
@@ -142,22 +142,22 @@ func (c *comando) Ejecutar(consola Consola, opciones ...string) (res any, cod Co
 	return c.accion(consola, banderas, parametros)
 }
 
-func (c comando) EsOculto() bool {
+func (c comando[T]) EsOculto() bool {
 	return c.Oculto
 }
 
-func (c comando) debeCerrar() bool {
+func (c comando[T]) debeCerrar() bool {
 	return false
 }
 
-func (c comando) DevolverNombre() string {
+func (c comando[T]) DevolverNombre() string {
 	return c.Nombre
 }
-func (c comando) DevolverAliases() []string {
+func (c comando[T]) DevolverAliases() []string {
 	return c.Aliases
 }
 
-func NuevoComando(nombre string, uso string, aliases []string, descripcion string, accion Accion, opciones []string, config ...Config) Comando {
+func NuevoComando[T any](nombre string, uso string, aliases []string, descripcion string, accion Accion[T], opciones []string, config ...Config) Comando {
 
 	cfg := Config{
 		EsOculto: false,
@@ -165,7 +165,7 @@ func NuevoComando(nombre string, uso string, aliases []string, descripcion strin
 	if len(config) > 0 {
 		cfg = config[0]
 	}
-	return &comando{
+	return &comando[T]{
 
 		Nombre:      nombre,
 		Uso:         uso,
@@ -175,4 +175,24 @@ func NuevoComando(nombre string, uso string, aliases []string, descripcion strin
 		Opciones:    opciones,
 		Oculto:      cfg.EsOculto,
 	}
+}
+
+func AccionSimple[R any](f func() (res R)) Accion[R] {
+	return Accion[R](func(consola consola.Consola, opciones []string, parametros map[string]any, argumentos ...any) (res R, cod CodigoError, err error) {
+		r := f()
+		return r, EXITO, nil
+	})
+}
+
+func AccionFalible[R any](f func() (res R, err error)) Accion[R] {
+	return Accion[R](func(consola consola.Consola, opciones []string, parametros map[string]any, argumentos ...any) (res R, cod CodigoError, err error) {
+		var c CodigoError
+		r, e := f()
+		if e != nil {
+			c = ERROR
+		} else {
+			c = EXITO
+		}
+		return r, c, e
+	})
 }

@@ -10,15 +10,13 @@ import (
 	"github.com/hernanatn/aplicacion.go/consola/teclado"
 )
 
-type Accion = comando.Accion
-
-type Opcion struct {
+type Opcion[T any] struct {
 	Nombre string
-	Accion Accion
+	Accion comando.Accion[T]
 }
 
 type Menu struct {
-	Opciones []*Opcion
+	Opciones []*Opcion[any]
 	Consola  consola.Consola
 
 	cursor       rune
@@ -29,7 +27,7 @@ type Menu struct {
 
 func NuevoMenu(con consola.Consola, cur rune) *Menu {
 	return &Menu{
-		[]*Opcion{},
+		[]*Opcion[any]{},
 		con,
 		cur,
 		0,
@@ -38,7 +36,7 @@ func NuevoMenu(con consola.Consola, cur rune) *Menu {
 	}
 }
 
-func (m *Menu) RegistrarOpcion(o *Opcion) *Menu {
+func (m *Menu) RegistrarOpcion(o *Opcion[any]) *Menu {
 	m.Opciones = append(m.Opciones, o)
 	m.largo++
 	return m
@@ -53,7 +51,7 @@ func (m Menu) borrarMenu() *Menu {
 	return &m
 }
 
-func (m Menu) imprimirOpcion(o *Opcion, seleccionada bool) {
+func (m Menu) imprimirOpcion(o *Opcion[any], seleccionada bool) {
 
 	var c cadena.Cadena
 	if seleccionada {
@@ -82,9 +80,9 @@ func (m *Menu) abrir() {
 	m.seleccionada = 0
 	m.renderizar()
 }
-func (m *Menu) Correr() (*Opcion, error) {
+func (m *Menu) Correr() (*Opcion[any], error) {
 	m.abrir()
-	var opcionRelevante *Opcion
+	var opcionRelevante *Opcion[any]
 	var errores []error
 	for !m.DebeCerrar() {
 		var tecla []byte = make([]byte, 3)

@@ -23,11 +23,10 @@ type Consola = comando.Consola
 type CodigoError = comando.CodigoError
 type Opciones = comando.Opciones
 type Parametros = comando.Parametros
-type Accion = comando.Accion
+
 type Comando = comando.Comando
 
 type Menu = menu.Menu
-type OpcionMenu = menu.Opcion
 
 const (
 	EXITO = comando.EXITO
@@ -36,7 +35,6 @@ const (
 
 var (
 	NuevaConsola = consola.NuevaConsola
-	NuevoComando = comando.NuevoComando
 	NuevoMenu    = menu.NuevoMenu
 )
 
@@ -60,11 +58,11 @@ type Aplicacion interface {
 	DebeCerrar() bool
 }
 
-type aplicacion struct {
+type aplicacion[T any] struct {
 	Nombre      string
 	Uso         string
 	Descripcion string
-	accion      comando.Accion
+	accion      comando.Accion[T]
 	Opciones    []string
 
 	consola    Consola
@@ -77,21 +75,21 @@ type aplicacion struct {
 
 type FUN func(c Aplicacion, args ...string) error
 
-func (a *aplicacion) Inicializar(args ...string) error {
+func (a *aplicacion[T]) Inicializar(args ...string) error {
 	return a.ini(a, args...)
 }
-func (a *aplicacion) Limpiar(args ...string) error {
+func (a *aplicacion[T]) Limpiar(args ...string) error {
 	return a.lim(a, args...)
 }
-func (a *aplicacion) Finalizar(args ...string) error {
+func (a *aplicacion[T]) Finalizar(args ...string) error {
 	return a.fin(a, args...)
 }
 
-func (a aplicacion) TextoAyuda() string {
+func (a aplicacion[T]) TextoAyuda() string {
 	return a.Nombre + cadena.TextoJustificado(a.Descripcion, 40, cadena.OpcionesFormato{Sangria: strings.Repeat(" ", 20-len(a.Nombre)-2), Prefijo: strings.Repeat(" ", 20), Color: color.GrisFuente}) + "\n"
 }
 
-func (a *aplicacion) Ayuda(_ Consola, args ...string) {
+func (a *aplicacion[T]) Ayuda(_ Consola, args ...string) {
 	a.ImprimirCadena(Cadena(cadena.Titulo(a.Nombre)))
 	a.ImprimirCadena(Cadena(cadena.Subtitulo(a.Descripcion)))
 	a.consola.EscribirLinea(Cadena("Ayuda").Negrita().Subrayada())
@@ -110,24 +108,24 @@ func (a *aplicacion) Ayuda(_ Consola, args ...string) {
 	a.consola.Imprimir()
 }
 
-func (a aplicacion) Consola() Consola {
+func (a aplicacion[T]) Consola() Consola {
 	return a
 }
 
-func (a aplicacion) DevolverNombre() string {
+func (a aplicacion[T]) DevolverNombre() string {
 	return a.Nombre
 }
-func (a aplicacion) DevolverAliases() []string {
+func (a aplicacion[T]) DevolverAliases() []string {
 	return []string{a.Nombre}
 }
 
-func (a *aplicacion) RegistrarComando(sub Comando) Aplicacion {
+func (a *aplicacion[T]) RegistrarComando(sub Comando) Aplicacion {
 	sub.AsignarPadre(a)
 	a.comandos = append(a.comandos, sub)
 	return a
 }
 
-func (a aplicacion) buscarComando(nombre string) (Comando, bool) {
+func (a aplicacion[T]) buscarComando(nombre string) (Comando, bool) {
 	for _, a := range a.comandos {
 		if a.DevolverNombre() == nombre || slices.Contains(a.DevolverAliases(), nombre) {
 			return a, true
@@ -136,8 +134,8 @@ func (a aplicacion) buscarComando(nombre string) (Comando, bool) {
 	return nil, false // [HACER] MEJORAR RETORNO...
 }
 
-func (a *aplicacion) AsignarPadre(Comando) {}
-func (a aplicacion) DescifrarOpciones(opciones []string) (comando.Parametros, []string) {
+func (a *aplicacion[T]) AsignarPadre(Comando) {}
+func (a aplicacion[T]) DescifrarOpciones(opciones []string) (comando.Parametros, []string) {
 	parametros := make(comando.Parametros)
 	banderas := make([]string, 0)
 
@@ -163,7 +161,7 @@ func (a aplicacion) DescifrarOpciones(opciones []string) (comando.Parametros, []
 	return parametros, banderas
 }
 
-func (a *aplicacion) Ejecutar(_ Consola, opciones ...string) (res any, cod comando.CodigoError, err error) {
+func (a *aplicacion[T]) Ejecutar(_ Consola, opciones ...string) (res any, cod comando.CodigoError, err error) {
 
 	if len(opciones) > 1 {
 		sc, existe := a.buscarComando(opciones[1])
@@ -179,32 +177,32 @@ func (a *aplicacion) Ejecutar(_ Consola, opciones ...string) (res any, cod coman
 	return a.accion(a, banderas, parametros)
 }
 
-func (a *aplicacion) RegistrarInicio(f FUN) Aplicacion {
+func (a *aplicacion[T]) RegistrarInicio(f FUN) Aplicacion {
 	a.ini = FUN(f)
 	return a
 }
-func (a *aplicacion) RegistrarLimpieza(f FUN) Aplicacion {
+func (a *aplicacion[T]) RegistrarLimpieza(f FUN) Aplicacion {
 	a.lim = FUN(f)
 	return a
 }
-func (a *aplicacion) RegistrarFinal(f FUN) Aplicacion {
+func (a *aplicacion[T]) RegistrarFinal(f FUN) Aplicacion {
 	a.fin = FUN(f)
 	return a
 }
 
-func (a aplicacion) Leer(c Cadena) (Cadena, error) {
+func (a aplicacion[T]) Leer(c Cadena) (Cadena, error) {
 	return a.consola.Leer(c)
 }
 
-func (e aplicacion) Read(p []byte) (n int, err error) {
+func (e aplicacion[T]) Read(p []byte) (n int, err error) {
 	return e.consola.Read(p)
 }
-func (s aplicacion) Write(p []byte) (n int, err error) {
+func (s aplicacion[T]) Write(p []byte) (n int, err error) {
 	return s.consola.Write(p)
 }
 
 /*
-	func (a aplicacion) Escribir(c Cadena) error {
+	func (a aplicacion[T]) Escribir(c Cadena) error {
 		_, err := a.salida.WriteString(c.S())
 		if err != nil {
 			return err
@@ -216,7 +214,7 @@ func (s aplicacion) Write(p []byte) (n int, err error) {
 		return nil
 	}
 
-	func (a aplicacion) Escribirf(f string, v ...any) error {
+	func (a aplicacion[T]) Escribirf(f string, v ...any) error {
 		_, err := a.salida.WriteString(fmt.Sprintf(f, v))
 		if err != nil {
 			return err
@@ -229,28 +227,28 @@ func (s aplicacion) Write(p []byte) (n int, err error) {
 	}
 */
 
-func (a aplicacion) BorrarLinea() error {
+func (a aplicacion[T]) BorrarLinea() error {
 	return a.consola.BorrarLinea()
 }
-func (a aplicacion) Imprimir() error {
+func (a aplicacion[T]) Imprimir() error {
 	return a.consola.Imprimir()
 }
-func (a aplicacion) ImprimirLinea(c Cadena) error {
+func (a aplicacion[T]) ImprimirLinea(c Cadena) error {
 	return a.consola.ImprimirLinea(c)
 }
 
-func (a aplicacion) ImprimirSeparador() {
+func (a aplicacion[T]) ImprimirSeparador() {
 	a.consola.ImprimirSeparador()
 
 }
-func (a aplicacion) EsOculto() bool {
+func (a aplicacion[T]) EsOculto() bool {
 	return false
 }
-func (a aplicacion) DebeCerrar() bool {
+func (a aplicacion[T]) DebeCerrar() bool {
 	return a.debeCerrar
 }
 
-func (a *aplicacion) Correr(args ...string) (r any, err error) {
+func (a *aplicacion[T]) Correr(args ...string) (r any, err error) {
 	var res any
 	ctrlC := make(chan os.Signal, 1)
 	signal.Notify(ctrlC, os.Interrupt, syscall.SIGTERM)
@@ -263,7 +261,7 @@ func (a *aplicacion) Correr(args ...string) (r any, err error) {
 	err = a.Inicializar(args...)
 	if err != nil {
 		a.Limpiar(args...)
-		a.ImprimirCadena(Cadena(cadena.Fatal("No se pudo inicializar la aplicacion", err)))
+		a.ImprimirCadena(Cadena(cadena.Fatal("No se pudo inicializar la aplicacion[T]", err)))
 		return nil, *new(error)
 	}
 
@@ -300,7 +298,7 @@ func (a *aplicacion) Correr(args ...string) (r any, err error) {
 
 		if err != nil {
 			a.ImprimirCadena(Cadena(cadena.Fatal(strconv.Itoa(int(cod)), err)))
-			a.ImprimirCadena(Cadena(cadena.Fatal("No se pudo ejecutar correctamente la aplicacion", err)))
+			a.ImprimirCadena(Cadena(cadena.Fatal("No se pudo ejecutar correctamente la aplicacion[T]", err)))
 			return nil, err
 		}
 	}
@@ -308,16 +306,16 @@ func (a *aplicacion) Correr(args ...string) (r any, err error) {
 	err = a.Finalizar(args...)
 	if err != nil {
 		a.Limpiar(args...)
-		a.ImprimirCadena(Cadena(cadena.Fatal("No se pudo finalizar correctamente la aplicacion", err)))
+		a.ImprimirCadena(Cadena(cadena.Fatal("No se pudo finalizar correctamente la aplicacion[T]", err)))
 		return nil, *new(error)
 	}
 
 	return res, nil
 }
 
-func NuevaAplicacion(nombre string, uso string, descripcion string, opciones []string, consola Consola) Aplicacion {
+func NuevaAplicacion[T any](nombre string, uso string, descripcion string, opciones []string, consola Consola) Aplicacion {
 
-	a := &aplicacion{
+	a := &aplicacion[T]{
 		Nombre:      nombre,
 		Uso:         uso,
 		Descripcion: descripcion,
@@ -331,7 +329,7 @@ func NuevaAplicacion(nombre string, uso string, descripcion string, opciones []s
 			"ayuda",
 			[]string{"-a", "-h"},
 			"Imprime la ayuda.",
-			comando.Accion(
+			comando.Accion[any](
 				func(con Consola, opciones comando.Opciones, parametros comando.Parametros, argumentos ...any) (res any, cod comando.CodigoError, err error) {
 					a.Ayuda(con, opciones...)
 					return nil, comando.EXITO, nil
@@ -343,7 +341,7 @@ func NuevaAplicacion(nombre string, uso string, descripcion string, opciones []s
 			"chau",
 			[]string{},
 			"Cierra el programa.",
-			comando.Accion(
+			comando.Accion[any](
 				func(con Consola, opciones comando.Opciones, parametros comando.Parametros, argumentos ...any) (res any, cod comando.CodigoError, err error) {
 					a.debeCerrar = true
 					return nil, comando.EXITO, nil
@@ -355,45 +353,45 @@ func NuevaAplicacion(nombre string, uso string, descripcion string, opciones []s
 	return a
 }
 
-func (a aplicacion) LeerContraseña(mensaje Cadena) (Cadena, error) {
+func (a aplicacion[T]) LeerContraseña(mensaje Cadena) (Cadena, error) {
 	return a.consola.LeerContraseña(mensaje)
 }
-func (a aplicacion) LeerTecla(b *[]byte) (int, error) {
+func (a aplicacion[T]) LeerTecla(b *[]byte) (int, error) {
 	return a.consola.LeerTecla(b)
 }
 
 // Escribe la Cadena al buffer y llama Imprimir()
-func (a aplicacion) ImprimirCadena(cadena Cadena) error {
+func (a aplicacion[T]) ImprimirCadena(cadena Cadena) error {
 	return a.consola.ImprimirCadena(cadena)
 }
 
 // Escribe los bytes al buffer y llama Imprimir()
-func (a aplicacion) ImprimirBytes(b []byte) error {
+func (a aplicacion[T]) ImprimirBytes(b []byte) error {
 	return a.consola.ImprimirBytes(b)
 }
 
 // Escribe la Cadena al buffer
-func (a aplicacion) EscribirCadena(cadena Cadena) error {
+func (a aplicacion[T]) EscribirCadena(cadena Cadena) error {
 	return a.consola.EscribirCadena(cadena)
 }
 
 // Escribe la Cadena +\r\n al buffer
-func (a aplicacion) EscribirLinea(cadena Cadena) error {
+func (a aplicacion[T]) EscribirLinea(cadena Cadena) error {
 	return a.consola.EscribirLinea(cadena)
 }
 
 // Escribe los bytes al buffers
-func (a aplicacion) EscribirBytes(b []byte) error {
+func (a aplicacion[T]) EscribirBytes(b []byte) error {
 	return a.consola.EscribirBytes(b)
 }
 
-func (a aplicacion) EsTerminal() bool {
+func (a aplicacion[T]) EsTerminal() bool {
 	return a.consola.EsTerminal()
 }
 
-func (a aplicacion) FEntrada() *os.File {
+func (a aplicacion[T]) FEntrada() *os.File {
 	return a.consola.FEntrada()
 }
-func (a aplicacion) FSalida() *os.File {
+func (a aplicacion[T]) FSalida() *os.File {
 	return a.consola.FSalida()
 }
