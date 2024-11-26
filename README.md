@@ -229,4 +229,12 @@ func NuevaAplicacion(nombre string, uso string, descripcion string, opciones []s
  
 ```
 
-Librería Desarrollada por Hernán A.T.N. para Ch'aska S.R.L. y distribuída bajo Licencia CC BY-NC 4.0  Derechos de autor (c) 2023 Ch'aska S.R.L. 
+Librería Desarrollada por Hernán A.T.N. para Ch'aska S.R.L. y distribuída bajo [Licencia CC BY-SA 4.0][cc-by-sa].  Derechos de autor (c) 2023 Ch'aska S.R.L. 
+
+---
+
+[![CC BY-SA 4.0][cc-by-sa-image]][cc-by-sa] [CH'ASKA](https://cajadeideas.ar)
+
+[cc-by-sa]: http://creativecommons.org/licenses/by-sa/4.0/
+[cc-by-sa-image]: https://licensebuttons.net/l/by-sa/4.0/88x31.png
+[cc-by-sa-shield]: https://img.shields.io/badge/License-CC%20BY--SA%204.0-lightgrey.svg
