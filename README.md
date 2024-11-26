@@ -86,8 +86,6 @@ func NuevaConsola(fe *os.File, fs *os.File) *Consola
 
 func NuevoComando(nombre string, uso string, aliases []string, descripcion string, accion AccionComando, opciones []string, config ...Config) Comando
 
-func NuevoMenu(con consola.Consola, cur rune) *Menu
-
 func NuevaAplicacion(nombre string, uso string, descripcion string, opciones []string, consola *Consola) Aplicacion
 
 
@@ -115,7 +113,8 @@ type Aplicacion interface {
 
 	DebeCerrar() bool
 }
-
+```
+```go
 type Comando interface {
 	Ejecutar(consola Consola, opciones ...string) (res any, cod CodigoError, err error)
 
@@ -130,7 +129,8 @@ type Comando interface {
 	DevolverNombre() string
 	DevolverAliases() []string
 }
-
+```
+```go
 type Consola interface {
 	Leer(Cadena) (Cadena, error)
 	LeerContraseña(Cadena) (Cadena, error)
@@ -159,6 +159,12 @@ La librería incluye módulos segregados y con interfaz pública propia:
 
 Además de `Aplicacion`, `Consola` y `Comando`, se ofrecen los tipos `Menu` y `Cadena`:
 ```go
+
+type Opcion struct {
+	Nombre string
+	Accion Accion //comando.Accion
+}
+
 type Menu struct {
 	Opciones []*Opcion
 	Consola  consola.Consola
@@ -169,6 +175,13 @@ type Menu struct {
 	debeCerrar   bool
 }
 
+func NuevoMenu(con consola.Consola, cur rune) *Menu
+
+func (m *Menu) RegistrarOpcion(o *Opcion) *Menu
+func (m *Menu) Correr() (*Opcion, error)
+func (m Menu) DebeCerrar() bool 
+```
+```go
 type Cadena string
 func (c Cadena) Colorear(col color.Color) Cadena
 func (c Cadena) Imprimir(f *bufio.Writer)
@@ -177,22 +190,24 @@ func (c Cadena) Italica() Cadena
 func (c Cadena) Limpiar() Cadena
 func (c Cadena) Negrita() Cadena
 func (c Cadena) Subrayada() Cadena
+func (c Cadena) Formatear(formatos ...Formateador) Cadena
 func (c Cadena) S() string 
 func (c Cadena) String() string // Alias de S()
+
+func DesdeArchivo(nombre string) (Cadena, error)
 ```
 
 Por simplicidad se optó por importar al espacio de nombres `aplicacion` todos los tipos, interfaces y funciones públicas releventes. 
 
 Los nombres expuestos por el módulo `aplicacion` son:
 ```go
-type Cadena // comando.Cadena
-type Consola interface // comando.Consola
+type Cadena // cadena.Cadena
+type Consola interface // consola.Consola
 type CodigoError // comando.CodigoError
-type Parametros // comando.Parametros
-type Comando interface // comando.Comando
+type Parametros // consola.Parametros
+type Opciones // consola.Opciones
 type Accion // comando.Accion
-type AccionComando // comando.AccionComando
-type AccionMenu // menu.AccionMenu
+type Comando interface // comando.Comando
 type Menu interface // menu.Menu
 type OpcionMenu // menu.Opcion
 type FUN
