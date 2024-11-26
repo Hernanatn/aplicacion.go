@@ -2,7 +2,7 @@
 
 Librería en GO para crear aplicaciones con interfaz basada en la Terminal o Línea de Comandos.
 
-La librería se presenta aún en versión beta - distribución v 0.2.1, no está particularmente optimizada y puede presentar errores.
+La librería se presenta aún en versión beta - distribución v 0.2.2, no está particularmente optimizada y puede presentar errores.
 
 [![Hecho por Chaska](https://img.shields.io/badge/hecho_por-Ch'aska-303030.svg)](https://cajadeideas.ar)
 [![Versión: Beta v0.1](https://img.shields.io/badge/version-Beta_v0.2.1-orange.svg)](https://github.com/hernanatn/github.com/hernanatn/aplicacion.go/releases/latest)
