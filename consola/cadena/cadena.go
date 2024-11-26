@@ -26,6 +26,8 @@ const (
 	JUSTIFICADO
 )
 
+type Formateador func(string) string
+
 type OpcionesFormato struct {
 	Color    color.ColorFuente
 	Fondo    color.ColorFondo
@@ -81,19 +83,26 @@ func TextoJustificado(s string, ancho int, opciones ...OpcionesFormato) string {
 }
 
 func Negrita(s string) string {
-	return fmt.Sprintf("\033[1m%s\033[0m", s)
+	return fmt.Sprintf("\033[1m%s%s", s, color.Resetear)
 }
 func Italica(s string) string {
-	return fmt.Sprintf("\033[3m%s\033[0m", s)
+	return fmt.Sprintf("\033[3m%s%s", s, color.Resetear)
 }
 func Subrayada(s string) string {
-	return fmt.Sprintf("\033[4m%s\033[0m", s)
+	return fmt.Sprintf("\033[4m%s%s", s, color.Resetear)
 }
 func Invertida(s string) string {
-	return fmt.Sprintf("\033[7m%s\033[0m", s)
+	return fmt.Sprintf("\033[7m%s%s", s, color.Resetear)
 }
 func Colorear(s string, c color.Color) string {
 	return fmt.Sprintf("%s%s%s", c, s, color.Resetear)
+}
+
+func Coloreador(c color.Color) func(string) string {
+	f := func(s string) string {
+		return Colorear(s, c)
+	}
+	return f
 }
 
 func Limpiar(s string) string {
@@ -118,10 +127,20 @@ func (c Cadena) Colorear(col color.Color) Cadena {
 
 func (c Cadena) Limpiar() Cadena {
 	return Cadena(strings.TrimSpace(strings.Trim(strings.Trim(c.S(), "\r"), "\n")))
+
+}
+
+func (c Cadena) Formatear(formatos ...Formateador) Cadena {
+	var cad Cadena = c
+	for _, f := range formatos {
+		cad = Cadena(f(cad.S()))
+	}
+	return cad
 }
 
 func Sugerencia(msg string) string {
 	return Italica(Colorear(fmt.Sprintf("%s.", msg), color.GrisFuente)) + "\n"
+
 }
 func Ok(msg string) string {
 	return Colorear(fmt.Sprintf("%s.", msg), color.VerdeFuente) + "\n"
@@ -171,4 +190,12 @@ func (c Cadena) String() string {
 
 func (c Cadena) S() string {
 	return c.String()
+}
+
+func DesdeArchivo(nombre string) (Cadena, error) {
+	data, err := os.ReadFile(nombre)
+	if err != nil {
+		return "", err
+	}
+	return Cadena(string(data)), nil
 }
