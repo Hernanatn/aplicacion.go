@@ -36,11 +36,10 @@ Los comentarios son inconsistentes y no deben ser toados como documentación.
 		"prueba -p <PROYOECTO> -r <RAIZ PROYECTO> [OPCIONES] --> [OPCIONES flask]",
 		[]string{"run"},
 		"Corre el servidor con flask.",
-		aplicacion.Accion(
-			func(con aplicacion.Consola, parametros aplicacion.Parametros, opciones ...string) (res any, cod aplicacion.CodigoError, err error) {
-				con.ImprimirLinea(aplicacion.Cadena("Comando de prueba"))
-				return nil, aplicacion.EXITO, nil
-			}),
+		func(con aplicacion.Consola, parametros aplicacion.Parametros, opciones ...string) (res any, cod aplicacion.CodigoError, err error) {
+			con.ImprimirLinea(aplicacion.Cadena("Comando de prueba"))
+			return nil, aplicacion.EXITO, nil
+		},
 		make([]string, 0),
 	)
 
@@ -140,11 +139,9 @@ type Consola interface {
 	ImprimirLinea(Cadena) error
 	ImprimirCadena(Cadena) error
 	BorrarLinea() error
-	//ImprimirString(string) error
 	ImprimirBytes([]byte) error
 	EscribirLinea(Cadena) error
 	EscribirCadena(Cadena) error
-	//EscribirString(string) error
 	ImprimirSeparador()
 	EscribirBytes([]byte) error
 	EsTerminal() bool

@@ -21,8 +21,9 @@ import (
 type Cadena = comando.Cadena
 type Consola = comando.Consola
 type CodigoError = comando.CodigoError
-type Opciones = comando.Opciones
-type Parametros = comando.Parametros
+type Opciones = consola.Opciones
+type Parametros = consola.Parametros
+type Argumentos = []any
 type Accion = comando.Accion
 type Comando = comando.Comando
 
@@ -137,9 +138,10 @@ func (a aplicacion) buscarComando(nombre string) (Comando, bool) {
 }
 
 func (a *aplicacion) AsignarPadre(Comando) {}
-func (a aplicacion) DescifrarOpciones(opciones []string) (comando.Parametros, []string) {
+func (a aplicacion) DescifrarOpciones(opciones []string) (Parametros, Opciones, Argumentos) {
 	parametros := make(comando.Parametros)
 	banderas := make([]string, 0)
+	argumentos := make([]any, 0)
 
 	for i, m := range opciones {
 		switch {
@@ -157,10 +159,12 @@ func (a aplicacion) DescifrarOpciones(opciones []string) (comando.Parametros, []
 					}
 				}
 			}
+		default:
+			argumentos = append(argumentos, utiles.Limpiar(m))
 		}
 
 	}
-	return parametros, banderas
+	return parametros, banderas, argumentos
 }
 
 func (a *aplicacion) Ejecutar(_ Consola, opciones ...string) (res any, cod comando.CodigoError, err error) {
@@ -171,12 +175,12 @@ func (a *aplicacion) Ejecutar(_ Consola, opciones ...string) (res any, cod coman
 			return sc.Ejecutar(a, opciones[1:]...)
 		}
 	}
-	parametros, banderas := a.DescifrarOpciones(opciones)
+	parametros, banderas, argumentos := a.DescifrarOpciones(opciones)
 	if a.accion == nil {
 		a.Ayuda(a)
 		return nil, comando.EXITO, nil
 	}
-	return a.accion(a, banderas, parametros)
+	return a.accion(a, banderas, parametros, argumentos...)
 }
 
 func (a *aplicacion) RegistrarInicio(f FUN) Aplicacion {

@@ -1,6 +1,7 @@
 package comando
 
 import (
+	"errors"
 	"slices"
 	"strings"
 
@@ -15,8 +16,9 @@ type Cadena = consola.Cadena
 
 type Opciones = consola.Opciones
 type Parametros = consola.Parametros
+type Argumentos = []any
 
-type Accion func(consola Consola, opciones Opciones, parametros Parametros, argumentos ...any) (res any, cod CodigoError, err error)
+type Accion = func(consola Consola, opciones Opciones, parametros Parametros, argumentos ...any) (res any, cod CodigoError, err error)
 
 type CodigoError int
 
@@ -31,7 +33,7 @@ type Comando interface {
 	Ayuda(con Consola, args ...string)
 	TextoAyuda() string
 
-	DescifrarOpciones(opciones []string) (Parametros, []string)
+	DescifrarOpciones(opciones Opciones) (Parametros, Opciones, Argumentos)
 
 	AsignarPadre(Comando)
 	EsOculto() bool
@@ -99,9 +101,10 @@ func (c *comando) buscarSubComando(nombre string) (Comando, bool) {
 	return nil, false // [HACER] MEJORAR RETORNO...
 }
 
-func (c *comando) DescifrarOpciones(opciones []string) (Parametros, []string) {
+func (c *comando) DescifrarOpciones(opciones []string) (Parametros, Opciones, Argumentos) {
 	parametros := make(Parametros)
 	banderas := make([]string, 0)
+	argumentos := make([]any, 0)
 
 	for i, m := range opciones {
 		switch {
@@ -112,18 +115,19 @@ func (c *comando) DescifrarOpciones(opciones []string) (Parametros, []string) {
 			default:
 				var j int
 				for k, p := range opciones[i+1:] {
-					switch {
-					case strings.Contains(p, "--"), strings.Contains(p, "-"):
+					if strings.Contains(p, "--") || strings.Contains(p, "-") {
 						j = k
+						parametros[m] = opciones[i+1 : j+i+1]
 						break
 					}
-					parametros[m] = opciones[i+1 : j+i+1]
 				}
 			}
+		default:
+			argumentos = append(argumentos, utiles.Limpiar(m))
 		}
 
 	}
-	return parametros, banderas
+	return parametros, banderas, argumentos
 }
 
 func (c *comando) Ejecutar(consola Consola, opciones ...string) (res any, cod CodigoError, err error) {
@@ -134,12 +138,12 @@ func (c *comando) Ejecutar(consola Consola, opciones ...string) (res any, cod Co
 			return sc.Ejecutar(consola, opciones[1:]...)
 		}
 	}
-	parametros, banderas := c.DescifrarOpciones(opciones)
+	parametros, banderas, argumentos := c.DescifrarOpciones(opciones)
 	if c.accion == nil {
 		c.Ayuda(consola)
 		return nil, EXITO, nil
 	}
-	return c.accion(consola, banderas, parametros)
+	return c.accion(consola, banderas, parametros, argumentos...)
 }
 
 func (c comando) EsOculto() bool {
@@ -174,5 +178,46 @@ func NuevoComando(nombre string, uso string, aliases []string, descripcion strin
 		Descripcion: descripcion,
 		Opciones:    opciones,
 		Oculto:      cfg.EsOculto,
+	}
+}
+
+func AccionNula(f func()) Accion {
+	return func(consola Consola, opciones Opciones, parametros Parametros, argumentos ...any) (res any, cod CodigoError, err error) {
+		f()
+		return nil, EXITO, nil
+	}
+}
+
+func AccionFalible(f func() error) Accion {
+	return func(consola Consola, opciones Opciones, parametros Parametros, argumentos ...any) (res any, cod CodigoError, err error) {
+		return nil, EXITO, f()
+	}
+}
+
+func AccionEntrada(f func(a any)) Accion {
+	return func(consola Consola, opciones Opciones, parametros Parametros, argumentos ...any) (res any, cod CodigoError, err error) {
+		if len(argumentos) < 1 {
+			return nil, ERROR, errors.New("no se pudo ejecutar la función asociada a esta acción. La función requiere un argumento, y 0 fueron provistos. ")
+		}
+		f(argumentos[0])
+		return nil, EXITO, nil
+	}
+}
+
+func AccionSalida(f func() any) Accion {
+	return func(consola Consola, opciones Opciones, parametros Parametros, argumentos ...any) (res any, cod CodigoError, err error) {
+		return f(), EXITO, nil
+	}
+}
+
+func AccionImprimible(f func(con Consola)) Accion {
+	return func(consola Consola, opciones Opciones, parametros Parametros, argumentos ...any) (res any, cod CodigoError, err error) {
+		f(consola)
+		return nil, EXITO, nil
+	}
+}
+func AccionImprimibleFalible(f func(con Consola) error) Accion {
+	return func(consola Consola, opciones Opciones, parametros Parametros, argumentos ...any) (res any, cod CodigoError, err error) {
+		return nil, EXITO, f(consola)
 	}
 }
