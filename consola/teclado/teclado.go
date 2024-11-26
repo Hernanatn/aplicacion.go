@@ -110,6 +110,9 @@ const ( // ASCII
 	y       byte = 0b01111001
 	z       byte = 0b01111010
 	ESPACIO byte = 0b00100000
+
+	//Extendido
+	CUADRADO = 0b10010110100000
 )
 
 var (
