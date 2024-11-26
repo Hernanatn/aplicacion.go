@@ -154,7 +154,7 @@ La librería incluye módulos segregados y con interfaz pública propia:
 - `menu` funcionalidad de menu de opciones renderizado en línea de comandos;
 - `cadena` alias de `string` con métodos personalizados para formato compatible con ANSI
 
-Además de `Aplicacion`, `Consola` y `Comando`, se ofrecen los tipos `Menu` y `Cadena`:
+Además de `Aplicacion`, `Consola` y `Comando`, se ofrecen los tipos `Menu`, `MultiMenu` y `Cadena`:
 ```go
 
 type Opcion struct {
@@ -176,6 +176,24 @@ func NuevoMenu(con consola.Consola, cur rune) *Menu
 
 func (m *Menu) RegistrarOpcion(o *Opcion) *Menu
 func (m *Menu) Correr() (*Opcion, error)
+func (m Menu) DebeCerrar() bool 
+```
+```go
+type MultiMenu struct {
+	Opciones []*Opcion
+	Consola  consola.Consola
+
+	cursor        rune
+	enfocada      int
+	seleccionadas []int
+	largo         int
+	debeCerrar    bool
+}
+
+func NuevoMultiMenu(con consola.Consola, cur rune) *Menu
+
+func (m *Menu) RegistrarOpcion(o *Opcion) *Menu
+func (m *Menu) Correr() ([]*Opcion, error)
 func (m Menu) DebeCerrar() bool 
 ```
 ```go
@@ -203,6 +221,7 @@ type Consola interface // consola.Consola
 type CodigoError // comando.CodigoError
 type Parametros // consola.Parametros
 type Opciones // consola.Opciones
+type Argumentos // comando.Argumentos
 type Accion // comando.Accion
 type Comando interface // comando.Comando
 type Menu interface // menu.Menu
@@ -221,6 +240,9 @@ func NuevoComando(nombre string, uso string, aliases []string, descripcion strin
 
 // menu.NuevoMenu
 func NuevoMenu(con consola.Consola, cur rune) *Menu 
+
+// multimenu.NuevoMultimenMenu
+func NuevoMultiMenu(con consola.Consola, cur rune) *Menu 
 
 func NuevaAplicacion(nombre string, uso string, descripcion string, opciones []string, consola *Consola) Aplicacion
  

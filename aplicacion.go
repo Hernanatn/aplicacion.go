@@ -15,6 +15,7 @@ import (
 	"github.com/hernanatn/aplicacion.go/consola/cadena"
 	"github.com/hernanatn/aplicacion.go/consola/color"
 	"github.com/hernanatn/aplicacion.go/menu"
+	"github.com/hernanatn/aplicacion.go/menu/multimenu"
 	"github.com/hernanatn/aplicacion.go/utiles"
 )
 
@@ -36,9 +37,10 @@ const (
 )
 
 var (
-	NuevaConsola = consola.NuevaConsola
-	NuevoComando = comando.NuevoComando
-	NuevoMenu    = menu.NuevoMenu
+	NuevaConsola   = consola.NuevaConsola
+	NuevoComando   = comando.NuevoComando
+	NuevoMenu      = menu.NuevoMenu
+	NuevoMultiMenu = multimenu.NuevoMultiMenu
 )
 
 type Aplicacion interface {
