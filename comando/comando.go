@@ -21,7 +21,7 @@ type Accion func(consola Consola, opciones Opciones, parametros Parametros, argu
 type CodigoError int
 
 const (
-	EXITO CodigoError = 0
+	EXITO CodigoError = iota << 0
 	ERROR CodigoError = -1
 )
 
