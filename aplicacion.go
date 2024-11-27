@@ -11,6 +11,7 @@ import (
 	"syscall"
 
 	"github.com/hernanatn/aplicacion.go/comando"
+	"github.com/hernanatn/aplicacion.go/comando/accion"
 	"github.com/hernanatn/aplicacion.go/consola"
 	"github.com/hernanatn/aplicacion.go/consola/cadena"
 	"github.com/hernanatn/aplicacion.go/consola/color"
@@ -25,7 +26,6 @@ type CodigoError = comando.CodigoError
 type Opciones = consola.Opciones
 type Parametros = consola.Parametros
 type Argumentos = []any
-type Accion = comando.Accion
 type Comando = comando.Comando
 
 type Menu = menu.Menu
@@ -67,7 +67,7 @@ type aplicacion struct {
 	Nombre      string
 	Uso         string
 	Descripcion string
-	accion      comando.Accion
+	accion      comando.PunteroAccion
 	Opciones    []string
 
 	consola    Consola
@@ -92,6 +92,9 @@ func (a *aplicacion) Finalizar(args ...string) error {
 
 func (a aplicacion) TextoAyuda() string {
 	return a.Nombre + cadena.TextoJustificado(a.Descripcion, 40, cadena.OpcionesFormato{Sangria: strings.Repeat(" ", 20-len(a.Nombre)-2), Prefijo: strings.Repeat(" ", 20), Color: color.GrisFuente}) + "\n"
+}
+func (a aplicacion) Accion() comando.PunteroAccion {
+	return a.accion
 }
 
 func (a *aplicacion) Ayuda(_ Consola, args ...string) {
@@ -130,7 +133,7 @@ func (a *aplicacion) RegistrarComando(sub Comando) Aplicacion {
 	return a
 }
 
-func (a aplicacion) buscarComando(nombre string) (Comando, bool) {
+func (a aplicacion) BuscarComando(nombre string) (Comando, bool) {
 	for _, a := range a.comandos {
 		if a.DevolverNombre() == nombre || slices.Contains(a.DevolverAliases(), nombre) {
 			return a, true
@@ -169,20 +172,20 @@ func (a aplicacion) DescifrarOpciones(opciones []string) (Parametros, Opciones, 
 	return parametros, banderas, argumentos
 }
 
-func (a *aplicacion) Ejecutar(_ Consola, opciones ...string) (res any, cod comando.CodigoError, err error) {
+func Ejecutar[R any](a *aplicacion, opciones ...string) (res R, cod comando.CodigoError, err error) {
 
 	if len(opciones) > 1 {
-		sc, existe := a.buscarComando(opciones[1])
+		sc, existe := a.BuscarComando(opciones[1])
 		if existe {
-			return sc.Ejecutar(a, opciones[1:]...)
+			return comando.Ejecutar[R](sc, a, opciones[1:]...)
 		}
 	}
 	parametros, banderas, argumentos := a.DescifrarOpciones(opciones)
-	if a.accion == nil {
+	if a.Accion().P == nil {
 		a.Ayuda(a)
-		return nil, comando.EXITO, nil
+		return *new(R), EXITO, nil
 	}
-	return a.accion(a, banderas, parametros, argumentos...)
+	return accion.InstanciarAccion[R](a.Accion())(a, banderas, parametros, argumentos...)
 }
 
 func (a *aplicacion) RegistrarInicio(f FUN) Aplicacion {
@@ -273,7 +276,7 @@ func (a *aplicacion) Correr(args ...string) (r any, err error) {
 		return nil, *new(error)
 	}
 
-	a.Ejecutar(a.consola, args...)
+	Ejecutar[any](a, args...)
 	for !a.DebeCerrar() {
 		entrada, err := a.Leer("")
 		if err != nil {
@@ -291,7 +294,7 @@ func (a *aplicacion) Correr(args ...string) (r any, err error) {
 		argumentos := strings.Split(entrada.Limpiar().S(), " ")
 		var com Comando
 		nombreComando := argumentos[0]
-		com, existe := a.buscarComando(nombreComando)
+		com, existe := a.BuscarComando(nombreComando)
 		opciones := argumentos[1:]
 		switch {
 		case len(argumentos) < 1 || len(argumentos) == 1 && nombreComando == "":
@@ -302,7 +305,7 @@ func (a *aplicacion) Correr(args ...string) (r any, err error) {
 			return nil, nil
 		}
 		var cod comando.CodigoError
-		res, cod, err = com.Ejecutar(a, opciones...)
+		res, cod, err = comando.Ejecutar[any](com, a, opciones...)
 
 		if err != nil {
 			a.ImprimirCadena(Cadena(cadena.Fatal(strconv.Itoa(int(cod)), err)))
@@ -337,7 +340,7 @@ func NuevaAplicacion(nombre string, uso string, descripcion string, opciones []s
 			"ayuda",
 			[]string{"-a", "-h"},
 			"Imprime la ayuda.",
-			comando.Accion(
+			accion.NuevoPunteroAccion(
 				func(con Consola, opciones comando.Opciones, parametros comando.Parametros, argumentos ...any) (res any, cod comando.CodigoError, err error) {
 					a.Ayuda(con, opciones...)
 					return nil, comando.EXITO, nil
@@ -349,7 +352,7 @@ func NuevaAplicacion(nombre string, uso string, descripcion string, opciones []s
 			"chau",
 			[]string{},
 			"Cierra el programa.",
-			comando.Accion(
+			accion.NuevoPunteroAccion(
 				func(con Consola, opciones comando.Opciones, parametros comando.Parametros, argumentos ...any) (res any, cod comando.CodigoError, err error) {
 					a.debeCerrar = true
 					return nil, comando.EXITO, nil

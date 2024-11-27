@@ -2,14 +2,20 @@
 
 Librería en GO para crear aplicaciones con interfaz basada en la Terminal o Línea de Comandos.
 
-La librería se presenta aún en versión beta - distribución `v 0.2.2-beta`, no está particularmente optimizada y puede presentar errores.
+La librería se presenta aún en versión beta - distribución `v 0.2.3-generica-beta`, no está particularmente optimizada y puede presentar errores.
+
+Versión paralela que implementa soporte para Acciones "genéricas", esto es, acciones que deben ser Instanciadas (coercionadas a un tipo concreto) y que por lo tanto presentan una firma más adecuada: en vez de devolver ` any, CodigoError, error` devuelven `T, CodigoError, error` donde T es un tipo concreto.
+
+Esta rama generica abusa el sistema de tipos de GO, es insegura y muy propensa a errores. 
+
+
 
 [![Hecho por Chaska](https://img.shields.io/badge/hecho_por-Ch'aska-303030.svg)](https://cajadeideas.ar)
-[![Versión: Beta v0.1](https://img.shields.io/badge/version-Beta_v0.2.3-orange.svg)](https://github.com/hernanatn/github.com/hernanatn/aplicacion.go/releases/latest)
+[![Versión: Beta v0.1](https://img.shields.io/badge/version-Beta_Generica_v0.2.3-orange.svg)](https://github.com/hernanatn/github.com/hernanatn/aplicacion.go/releases/latest)
 [![Verisón de Go: 1.22.5](https://img.shields.io/badge/Go-1.22.5-blue?logo=go)](https://go.dev/doc/go1.22)
 [![Licencia: CC BY-NC 4.0](https://img.shields.io/badge/Licencia-CC_BY--SA_4.0-lightgrey.svg)](LICENSE)
 ## Documentación
-De momento se ofrece como documentación únicamente la generada automáticamente por [`gomarkdoc`](<https://github.com/princjef/gomarkdoc>), a la cual se puede acceder desde [/documentación]().
+La documentación es incorrecta y responde a la versión principal (rama main).
 
 Se ofrece, además, un [ejemplo de úso básico](#uso-básico) y una pequeña descripción de las [Interfaces Públicas](#interfaz-pública-simple) provistas.
 

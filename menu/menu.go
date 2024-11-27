@@ -3,18 +3,16 @@ package menu
 import (
 	"errors"
 
-	"github.com/hernanatn/aplicacion.go/comando"
+	"github.com/hernanatn/aplicacion.go/comando/accion"
 	"github.com/hernanatn/aplicacion.go/consola"
 	"github.com/hernanatn/aplicacion.go/consola/cadena"
 	"github.com/hernanatn/aplicacion.go/consola/color"
 	"github.com/hernanatn/aplicacion.go/consola/teclado"
 )
 
-type Accion = comando.Accion
-
 type Opcion struct {
 	Nombre string
-	Accion Accion
+	Accion accion.PunteroAccion
 }
 
 type Menu struct {

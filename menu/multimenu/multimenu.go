@@ -11,7 +11,6 @@ import (
 	"github.com/hernanatn/aplicacion.go/menu"
 )
 
-type Accion = menu.Accion
 type Opcion = menu.Opcion
 
 type MultiMenu struct {

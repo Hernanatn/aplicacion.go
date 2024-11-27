@@ -1,38 +1,46 @@
 package comando
 
 import (
-	"errors"
 	"slices"
 	"strings"
 
+	"github.com/hernanatn/aplicacion.go/comando/accion"
 	"github.com/hernanatn/aplicacion.go/consola"
 	"github.com/hernanatn/aplicacion.go/consola/cadena"
 	"github.com/hernanatn/aplicacion.go/consola/color"
 	"github.com/hernanatn/aplicacion.go/utiles"
 )
 
-type Consola = consola.Consola
+type Consola = accion.Consola
+type Opciones = accion.Opciones
+type Parametros = accion.Parametros
+type Argumentos = accion.Argumentos
+
+/*
+PunteroAccion
+
+	Se utiliza `unsafe.Pointer` para poder pasar funciones donde el resultado `res T`, sea de un tipo arbitrario pero concreto (en vez de `any`)
+
+La función debe tener la siguiente firma:
+
+	func (consola Consola, opciones Opciones, parametros Parametros, argumentos ...any) (res T, cod CodigoError, err error)
+*/
+type PunteroAccion = accion.PunteroAccion
+type Accion[T any] accion.Accion[T]
+
 type Cadena = consola.Cadena
 
-type Opciones = consola.Opciones
-type Parametros = consola.Parametros
-type Argumentos = []any
-
-type Accion = func(consola Consola, opciones Opciones, parametros Parametros, argumentos ...any) (res any, cod CodigoError, err error)
-
-type CodigoError int
+type CodigoError = accion.CodigoError
 
 const (
-	EXITO CodigoError = iota << 0
-	ERROR CodigoError = -1
+	EXITO = accion.EXITO
+	ERROR = accion.ERROR
 )
 
 type Comando interface {
-	Ejecutar(consola Consola, opciones ...string) (res any, cod CodigoError, err error)
-
 	Ayuda(con Consola, args ...string)
 	TextoAyuda() string
-
+	BuscarComando(nombre string) (Comando, bool)
 	DescifrarOpciones(opciones Opciones) (Parametros, Opciones, Argumentos)
 
 	AsignarPadre(Comando)
@@ -40,6 +48,7 @@ type Comando interface {
 
 	DevolverNombre() string
 	DevolverAliases() []string
+	Accion() PunteroAccion
 }
 
 type Config struct {
@@ -53,7 +62,7 @@ type comando struct {
 	Opciones    []string
 	Oculto      bool
 
-	accion   Accion
+	accion   PunteroAccion
 	comandos []Comando
 	padre    Comando
 }
@@ -88,11 +97,15 @@ func (c *comando) RegistrarComando(sub Comando) Comando {
 	return c
 }
 
+func (c *comando) Accion() PunteroAccion {
+	return c.accion
+}
+
 func (c *comando) AsignarPadre(p Comando) {
 	c.padre = p
 }
 
-func (c *comando) buscarSubComando(nombre string) (Comando, bool) {
+func (c *comando) BuscarComando(nombre string) (Comando, bool) {
 	for _, c := range c.comandos {
 		if c.DevolverNombre() == nombre || slices.Contains(c.DevolverAliases(), nombre) {
 			return c, true
@@ -130,20 +143,20 @@ func (c *comando) DescifrarOpciones(opciones []string) (Parametros, Opciones, Ar
 	return parametros, banderas, argumentos
 }
 
-func (c *comando) Ejecutar(consola Consola, opciones ...string) (res any, cod CodigoError, err error) {
+func Ejecutar[T any](c Comando, consola Consola, opciones ...string) (res T, cod CodigoError, err error) {
 
 	if len(opciones) > 0 {
-		sc, existe := c.buscarSubComando(opciones[0])
+		sc, existe := c.BuscarComando(opciones[0])
 		if existe {
-			return sc.Ejecutar(consola, opciones[1:]...)
+			return Ejecutar[T](sc, consola, opciones[1:]...)
 		}
 	}
 	parametros, banderas, argumentos := c.DescifrarOpciones(opciones)
-	if c.accion == nil {
+	if c.Accion().P == nil {
 		c.Ayuda(consola)
-		return nil, EXITO, nil
+		return *new(T), EXITO, nil
 	}
-	return c.accion(consola, banderas, parametros, argumentos...)
+	return accion.InstanciarAccion[T](c.Accion())(consola, banderas, parametros, argumentos...)
 }
 
 func (c comando) EsOculto() bool {
@@ -161,7 +174,7 @@ func (c comando) DevolverAliases() []string {
 	return c.Aliases
 }
 
-func NuevoComando(nombre string, uso string, aliases []string, descripcion string, accion Accion, opciones []string, config ...Config) Comando {
+func NuevoComando(nombre string, uso string, aliases []string, descripcion string, accion PunteroAccion, opciones []string, config ...Config) Comando {
 
 	cfg := Config{
 		EsOculto: false,
@@ -178,46 +191,5 @@ func NuevoComando(nombre string, uso string, aliases []string, descripcion strin
 		Descripcion: descripcion,
 		Opciones:    opciones,
 		Oculto:      cfg.EsOculto,
-	}
-}
-
-func AccionNula(f func()) Accion {
-	return func(consola Consola, opciones Opciones, parametros Parametros, argumentos ...any) (res any, cod CodigoError, err error) {
-		f()
-		return nil, EXITO, nil
-	}
-}
-
-func AccionFalible(f func() error) Accion {
-	return func(consola Consola, opciones Opciones, parametros Parametros, argumentos ...any) (res any, cod CodigoError, err error) {
-		return nil, EXITO, f()
-	}
-}
-
-func AccionEntrada(f func(a any)) Accion {
-	return func(consola Consola, opciones Opciones, parametros Parametros, argumentos ...any) (res any, cod CodigoError, err error) {
-		if len(argumentos) < 1 {
-			return nil, ERROR, errors.New("no se pudo ejecutar la función asociada a esta acción. La función requiere un argumento, y 0 fueron provistos. ")
-		}
-		f(argumentos[0])
-		return nil, EXITO, nil
-	}
-}
-
-func AccionSalida(f func() any) Accion {
-	return func(consola Consola, opciones Opciones, parametros Parametros, argumentos ...any) (res any, cod CodigoError, err error) {
-		return f(), EXITO, nil
-	}
-}
-
-func AccionImprimible(f func(con Consola)) Accion {
-	return func(consola Consola, opciones Opciones, parametros Parametros, argumentos ...any) (res any, cod CodigoError, err error) {
-		f(consola)
-		return nil, EXITO, nil
-	}
-}
-func AccionImprimibleFalible(f func(con Consola) error) Accion {
-	return func(consola Consola, opciones Opciones, parametros Parametros, argumentos ...any) (res any, cod CodigoError, err error) {
-		return nil, EXITO, f(consola)
 	}
 }
