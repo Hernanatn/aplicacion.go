@@ -63,6 +63,10 @@ type Consola interface {
 	EscribirBytes([]byte) error
 	EsTerminal() bool
 
+	ImprimirError(Cadena, error) error
+	ImprimirFatal(Cadena, error) error
+	ImprimirAdvertencia(Cadena, error) error
+
 	FSalida() *os.File
 	FEntrada() *os.File
 }
@@ -103,6 +107,27 @@ func (c consola) Imprimir() error {
 // Escribe la Cadena al buffer y llama Imprimir()
 func (c consola) ImprimirCadena(cadena Cadena) error {
 	err1 := c.EscribirCadena(cadena)
+	err2 := c.Imprimir()
+	return errors.Join(err1, err2)
+}
+
+// Escribe la Cadena al buffer, la formatea como Advertencia y llama Imprimir()
+func (c consola) ImprimirAdvertencia(ca Cadena, e error) error {
+	err1 := c.EscribirCadena(cadena.Cadena(cadena.Advertencia(ca.S(), e)))
+	err2 := c.Imprimir()
+	return errors.Join(err1, err2)
+}
+
+// Escribe la Cadena al buffer, la formatea como Error y llama Imprimir()
+func (c consola) ImprimirError(ca Cadena, e error) error {
+	err1 := c.EscribirCadena(cadena.Cadena(cadena.Error(ca.S(), e)))
+	err2 := c.Imprimir()
+	return errors.Join(err1, err2)
+}
+
+// Escribe la Cadena al buffer, la formatea como Fatal y llama Imprimir()
+func (c consola) ImprimirFatal(ca Cadena, e error) error {
+	err1 := c.EscribirCadena(cadena.Cadena(cadena.Fatal(ca.S(), e)))
 	err2 := c.Imprimir()
 	return errors.Join(err1, err2)
 }

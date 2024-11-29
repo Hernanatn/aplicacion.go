@@ -263,13 +263,13 @@ func (a *aplicacion) Correr(args ...string) (r any, err error) {
 	go func() {
 		<-ctrlC
 		a.Limpiar(args...)
-		a.ImprimirLinea(cadena.Cadena("\n" + cadena.Error("Programa terminado por el usuario: [CTRL+C]", nil)))
+		a.ImprimirError("Programa terminado por el usuario: [CTRL+C]", nil)
 		os.Exit(1)
 	}()
 	err = a.Inicializar(args...)
 	if err != nil {
 		a.Limpiar(args...)
-		a.ImprimirCadena(Cadena(cadena.Fatal("No se pudo inicializar la aplicacion", err)))
+		a.ImprimirFatal("No se pudo inicializar la aplicacion", err)
 		return nil, *new(error)
 	}
 
@@ -280,11 +280,11 @@ func (a *aplicacion) Correr(args ...string) (r any, err error) {
 			if err == io.EOF {
 				a.debeCerrar = true
 				a.Limpiar(args...)
-				a.ImprimirLinea(cadena.Cadena("\n" + cadena.Error("Programa terminado por el usuario: [CTRL+C]", nil)))
+				a.ImprimirError("Programa terminado por el usuario: [CTRL+C]", nil)
 				os.Exit(1)
 			}
 			a.Limpiar(args...)
-			a.ImprimirCadena(Cadena(cadena.Fatal("No se pudo leer desde la entrada de la Aplicación", err)))
+			a.ImprimirFatal("No se pudo leer desde la entrada de la Aplicación", err)
 			return nil, err
 		}
 
@@ -297,7 +297,7 @@ func (a *aplicacion) Correr(args ...string) (r any, err error) {
 		case len(argumentos) < 1 || len(argumentos) == 1 && nombreComando == "":
 			continue
 		case !existe:
-			a.ImprimirCadena(Cadena(cadena.Error(fmt.Sprintf("Se intento ejecutar el comando: %s. Pero el comando no existe", nombreComando), nil)))
+			a.ImprimirError(cadena.Cadena(fmt.Sprintf("Se intento ejecutar el comando: %s. Pero el comando no existe", nombreComando)), nil)
 			a.Ayuda(a)
 			return nil, nil
 		}
@@ -305,8 +305,8 @@ func (a *aplicacion) Correr(args ...string) (r any, err error) {
 		res, cod, err = com.Ejecutar(a, opciones...)
 
 		if err != nil {
-			a.ImprimirCadena(Cadena(cadena.Fatal(strconv.Itoa(int(cod)), err)))
-			a.ImprimirCadena(Cadena(cadena.Fatal("No se pudo ejecutar correctamente la aplicacion", err)))
+			a.ImprimirFatal(cadena.Cadena(strconv.Itoa(int(cod))), err)
+			a.ImprimirFatal("No se pudo ejecutar correctamente la aplicacion", err)
 			return nil, err
 		}
 	}
@@ -314,7 +314,7 @@ func (a *aplicacion) Correr(args ...string) (r any, err error) {
 	err = a.Finalizar(args...)
 	if err != nil {
 		a.Limpiar(args...)
-		a.ImprimirCadena(Cadena(cadena.Fatal("No se pudo finalizar correctamente la aplicacion", err)))
+		a.ImprimirFatal("No se pudo finalizar correctamente la aplicacion", err)
 		return nil, *new(error)
 	}
 
@@ -391,6 +391,21 @@ func (a aplicacion) EscribirLinea(cadena Cadena) error {
 // Escribe los bytes al buffers
 func (a aplicacion) EscribirBytes(b []byte) error {
 	return a.consola.EscribirBytes(b)
+}
+
+// Escribe la Cadena al buffer, la formatea como Advertencia y llama Imprimir()
+func (a aplicacion) ImprimirAdvertencia(cadena Cadena, e error) error {
+	return a.consola.ImprimirAdvertencia(cadena, e)
+}
+
+// Escribe la Cadena al buffer, la formatea como Error y llama Imprimir()
+func (a aplicacion) ImprimirError(cadena Cadena, e error) error {
+	return a.consola.ImprimirError(cadena, e)
+}
+
+// Escribe la Cadena al buffer, la formatea como Fatal y llama Imprimir()
+func (a aplicacion) ImprimirFatal(cadena Cadena, e error) error {
+	return a.consola.ImprimirFatal(cadena, e)
 }
 
 func (a aplicacion) EsTerminal() bool {

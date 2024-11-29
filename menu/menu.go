@@ -90,7 +90,7 @@ func (m *Menu) Correr() (*Opcion, error) {
 		var tecla []byte = make([]byte, 3)
 		_, err := m.Consola.LeerTecla(&tecla)
 		if err != nil {
-			m.Consola.ImprimirLinea(cadena.Cadena(cadena.Error("menu.go / 93 > m.Consola.LeerTecla(&tecla)", err)))
+			m.Consola.ImprimirError("menu.go / 93 > m.Consola.LeerTecla(&tecla)", err)
 			errores = append(errores, err)
 		}
 		switch tecla[0] {
