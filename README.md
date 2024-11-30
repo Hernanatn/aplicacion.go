@@ -138,6 +138,11 @@ type Consola interface {
 	Imprimir() error
 	ImprimirLinea(Cadena) error
 	ImprimirCadena(Cadena) error
+	
+	ImprimirError(Cadena, error) error
+	ImprimirFatal(Cadena, error) error
+	ImprimirAdvertencia(Cadena, error) error
+
 	BorrarLinea() error
 	ImprimirBytes([]byte) error
 	EscribirLinea(Cadena) error
