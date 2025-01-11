@@ -1,4 +1,4 @@
 dist/
 build/
-secretos/
+.secretos/
 viejo/

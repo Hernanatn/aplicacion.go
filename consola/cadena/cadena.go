@@ -142,6 +142,9 @@ func Sugerencia(msg string) string {
 	return Italica(Colorear(fmt.Sprintf("%s.", msg), color.GrisFuente)) + "\n"
 
 }
+func Debug(msg string, err error) string {
+	return Colorear(fmt.Sprintf(Negrita("[DEBUG]")+"\t%s. err: %v.", msg, err), color.GrisFuente) + "\n"
+}
 func Ok(msg string) string {
 	return Colorear(fmt.Sprintf("%s.", msg), color.VerdeFuente) + "\n"
 }
