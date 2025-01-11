@@ -7,6 +7,7 @@ La librería se presenta aún en versión beta - distribución `v 0.2.4-beta`, n
 [![Hecho por Chaska](https://img.shields.io/badge/hecho_por-Ch'aska-303030.svg)](https://cajadeideas.ar)
 [![Versión: Beta v0.1](https://img.shields.io/badge/version-Beta_v0.2.4-orange.svg)](https://github.com/hernanatn/github.com/hernanatn/aplicacion.go/releases/latest)
 [![Verisón de Go: 1.22.5](https://img.shields.io/badge/Go-1.22.5-blue?logo=go)](https://go.dev/doc/go1.22)
+[![GOPKG](https://img.shields.io/badge/Go-pkg-blue?logo=go)]([https://go.dev/doc/go1.22](https://pkg.go.dev/github.com/hernanatn/aplicacion.go@v0.2.4-beta))
 [![Licencia: CC BY-NC 4.0](https://img.shields.io/badge/Licencia-CC_BY--SA_4.0-lightgrey.svg)](LICENSE)
 ## Documentación
 De momento se ofrece como documentación únicamente la generada automáticamente por [`gomarkdoc`](<https://github.com/princjef/gomarkdoc>), a la cual se puede acceder desde [/documentación]().
