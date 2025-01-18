@@ -171,8 +171,8 @@ func (a aplicacion) DescifrarOpciones(opciones []string) (Parametros, Opciones, 
 
 func (a *aplicacion) Ejecutar(_ Consola, opciones ...string) (res any, cod comando.CodigoError, err error) {
 
-	if len(opciones) > 1 {
-		sc, existe := a.buscarComando(opciones[1])
+	if len(opciones) > 0 {
+		sc, existe := a.buscarComando(opciones[0])
 		if existe {
 			return sc.Ejecutar(a, opciones[1:]...)
 		}
