@@ -195,6 +195,10 @@ func (c Cadena) S() string {
 	return c.String()
 }
 
+func CadenaFormato(formato string, elementos ...any) Cadena {
+	return Cadena(fmt.Sprintf(formato, elementos...))
+}
+
 func DesdeArchivo(nombre string) (Cadena, error) {
 	data, err := os.ReadFile(nombre)
 	if err != nil {
