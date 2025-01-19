@@ -3,6 +3,7 @@ package cadena
 import (
 	"bufio"
 	"fmt"
+	"math"
 	"os"
 	"strings"
 
@@ -161,6 +162,28 @@ func Fatal(msg string, err error) string {
 	return Colorear(fmt.Sprintf(Negrita("[FATAL]")+"\t%s. err: %v.", msg, err), color.RojoFondo) + "\n"
 }
 
+func (c Cadena) Sugerencia() Cadena {
+	return (c.Limpiar() + ".").Colorear(color.GrisFuente).Italica() + "\n"
+}
+func (c Cadena) Debug(err error) Cadena {
+	return (Cadena("[DEBUG]").Negrita() + CadenaFormato("\t%s. err: %v.", c.Limpiar(), err)).Colorear(color.GrisFuente) + "\n"
+}
+func (c Cadena) Ok() Cadena {
+	return ("✓  " + c.Limpiar() + ".").Colorear(color.VerdeFuente) + "\n"
+}
+func (c Cadena) Exito() Cadena {
+	return ("✓  " + c.Limpiar() + ".").Colorear(color.VerdeFondo).Negrita() + "\n"
+}
+func (c Cadena) Advertencia(err error) Cadena {
+	return (Cadena("⚠  [ADVERTENCIA]").Negrita() + CadenaFormato("\t%s. err: %v.", c.Limpiar(), err).Colorear(color.AmarilloFuente)).Colorear(color.AmarilloFuente) + "\n"
+}
+func (c Cadena) Error(err error) Cadena {
+	return (Cadena("✕  [ERROR]").Negrita() + CadenaFormato("\t%s. err: %v.", c.Limpiar(), err).Colorear(color.RojoFuente)).Colorear(color.RojoFuente) + "\n"
+}
+func (c Cadena) Fatal(err error) Cadena {
+	return Cadena("✕  [FATAL]").Negrita().Colorear(color.RojoFondo) + CadenaFormato("\t%s. err: %v.", c.Limpiar(), err).Colorear(color.RojoFuente) + "\n"
+}
+
 func ImprimirTitulo(s string) {
 	fmt.Println(Cadena(s).Negrita().Colorear(color.CyanFuente))
 }
@@ -205,4 +228,61 @@ func DesdeArchivo(nombre string) (Cadena, error) {
 		return "", err
 	}
 	return Cadena(string(data)), nil
+}
+
+func Tabla(encabezados []string, filas [][]string) string {
+	cantColumnas := float64(len(encabezados))
+	var maxLargos map[int]int = make(map[int]int)
+	ec := [][]string{encabezados}
+	for _, fila := range append(ec, filas...) {
+		cantColumnas = math.Max(cantColumnas, float64(len(fila)))
+		for j, columna := range fila {
+			maxLargos[j] = int(math.Max(math.Max(float64(maxLargos[j]), float64(len(columna))), 3))
+		}
+	}
+
+	var salida string = "\n+"
+	for c := 0; c < int(cantColumnas); c++ {
+		salida += strings.Repeat("-", maxLargos[c]+2) + "+"
+	}
+	salida += "\n|"
+
+	for c := 0; c < int(cantColumnas); c++ {
+		f := fmt.Sprintf(" %%-%ds ", maxLargos[c])
+		var v string
+		if c < len(encabezados) {
+			v = encabezados[c]
+		} else {
+			v = "N/A"
+		}
+		salida += fmt.Sprintf(f, v) + "|"
+	}
+
+	salida += "\n+"
+	for c := 0; c < int(cantColumnas); c++ {
+		salida += strings.Repeat("-", maxLargos[c]+2) + "+"
+	}
+	salida += "\n"
+
+	for _, fila := range filas {
+		salida += "|"
+		for c := 0; c < int(cantColumnas); c++ {
+			f := fmt.Sprintf(" %%-%ds ", maxLargos[c])
+			var v string
+			if c < len(fila) {
+				v = fila[c]
+			} else {
+				v = "N/A"
+			}
+			salida += fmt.Sprintf(f, v) + "|"
+		}
+		salida += "\n"
+	}
+	salida += "+"
+	for c := 0; c < int(cantColumnas); c++ {
+		salida += strings.Repeat("-", maxLargos[c]+2) + "+"
+	}
+	salida += "\n"
+
+	return salida
 }
