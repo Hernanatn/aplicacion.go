@@ -21,10 +21,20 @@ type Cadena string
 type TipoAlineado int
 
 const (
-	IZQUIERDA = iota
+	IZQUIERDA TipoAlineado = iota
 	DERECHA
 	CENTRO
 	JUSTIFICADO
+)
+
+type TipoEstilo int
+
+const (
+	NORMAL TipoEstilo = iota
+	NEGRITA
+	ITALICA
+	SUBRAYADA
+	INVERTIDA
 )
 
 type Formateador func(string) string
@@ -33,6 +43,7 @@ type OpcionesFormato struct {
 	Color    color.ColorFuente
 	Fondo    color.ColorFondo
 	Alineado TipoAlineado
+	Estilo   TipoEstilo
 	Sangria  string
 	Prefijo  string
 	Sufijo   string
@@ -166,7 +177,7 @@ func (c Cadena) Sugerencia() Cadena {
 	return (c.Limpiar() + ".").Colorear(color.GrisFuente).Italica() + "\n"
 }
 func (c Cadena) Debug(err error) Cadena {
-	return (Cadena("[DEBUG]").Negrita() + CadenaFormato("\t%s. err: %v.", c.Limpiar(), err)).Colorear(color.GrisFuente) + "\n"
+	return (Cadena("[DEBUG]").Negrita() + CadenaFmt("\t%s. err: %v.", c.Limpiar(), err)).Colorear(color.GrisFuente) + "\n"
 }
 func (c Cadena) Ok() Cadena {
 	return ("✓  " + c.Limpiar() + ".").Colorear(color.VerdeFuente) + "\n"
@@ -175,13 +186,13 @@ func (c Cadena) Exito() Cadena {
 	return ("✓  " + c.Limpiar() + ".").Colorear(color.VerdeFondo).Negrita() + "\n"
 }
 func (c Cadena) Advertencia(err error) Cadena {
-	return (Cadena("⚠  [ADVERTENCIA]").Negrita() + CadenaFormato("\t%s. err: %v.", c.Limpiar(), err).Colorear(color.AmarilloFuente)).Colorear(color.AmarilloFuente) + "\n"
+	return (Cadena("⚠  [ADVERTENCIA]").Negrita() + CadenaFmt("\t%s. err: %v.", c.Limpiar(), err).Colorear(color.AmarilloFuente)).Colorear(color.AmarilloFuente) + "\n"
 }
 func (c Cadena) Error(err error) Cadena {
-	return (Cadena("✕  [ERROR]").Negrita() + CadenaFormato("\t%s. err: %v.", c.Limpiar(), err).Colorear(color.RojoFuente)).Colorear(color.RojoFuente) + "\n"
+	return (Cadena("✕  [ERROR]").Negrita() + CadenaFmt("\t%s. err: %v.", c.Limpiar(), err).Colorear(color.RojoFuente)).Colorear(color.RojoFuente) + "\n"
 }
 func (c Cadena) Fatal(err error) Cadena {
-	return Cadena("✕  [FATAL]").Negrita().Colorear(color.RojoFondo) + CadenaFormato("\t%s. err: %v.", c.Limpiar(), err).Colorear(color.RojoFuente) + "\n"
+	return Cadena("✕  [FATAL]").Negrita().Colorear(color.RojoFondo) + CadenaFmt("\t%s. err: %v.", c.Limpiar(), err).Colorear(color.RojoFuente) + "\n"
 }
 
 func ImprimirTitulo(s string) {
@@ -218,8 +229,24 @@ func (c Cadena) S() string {
 	return c.String()
 }
 
-func CadenaFormato(formato string, elementos ...any) Cadena {
+func CadenaFmt(formato string, elementos ...any) Cadena {
 	return Cadena(fmt.Sprintf(formato, elementos...))
+}
+
+func (c Cadena) CadenaAplicarEstilos(estilos OpcionesFormato) Cadena {
+
+	var s Cadena = c.Colorear(estilos.Fondo).Colorear(estilos.Color)
+
+	switch estilos.Estilo {
+	case NEGRITA:
+		s = s.Negrita()
+	case ITALICA:
+		s = s.Italica()
+	case SUBRAYADA:
+		s = s.Subrayada()
+	}
+
+	return Cadena(estilos.Prefijo) + s + Cadena(estilos.Sufijo)
 }
 
 func DesdeArchivo(nombre string) (Cadena, error) {
@@ -230,6 +257,75 @@ func DesdeArchivo(nombre string) (Cadena, error) {
 	return Cadena(string(data)), nil
 }
 
+func TablaFormateada(encabezados []Cadena, filas [][]Cadena, formato ...OpcionesFormato) Cadena {
+	cantColumnas := float64(len(encabezados))
+	var maxLargos map[int]int = make(map[int]int)
+
+	var formatoF OpcionesFormato
+	var formatoE OpcionesFormato
+	switch {
+	case len(formato) == 2:
+		formatoE = formato[0]
+		formatoF = formato[1]
+	case len(formato) == 1:
+		formatoE = formato[0]
+		formatoF = formato[0]
+	}
+
+	ec := [][]Cadena{encabezados}
+	for _, fila := range append(ec, filas...) {
+		cantColumnas = math.Max(cantColumnas, float64(len(fila)))
+		for j, columna := range fila {
+			maxLargos[j] = int(math.Max(math.Max(float64(maxLargos[j]), float64(len(columna))), 3))
+		}
+	}
+
+	var salida Cadena = "\n+"
+	for c := 0; c < int(cantColumnas); c++ {
+		salida += Cadena(strings.Repeat("-", maxLargos[c]+2) + "+")
+	}
+	salida += "\n|"
+
+	for c := 0; c < int(cantColumnas); c++ {
+		f := fmt.Sprintf(" %%-%ds ", maxLargos[c])
+		var v Cadena
+		if c < len(encabezados) {
+
+			v = encabezados[c].CadenaAplicarEstilos(formatoE)
+		} else {
+			v = "N/A"
+		}
+		salida += Cadena(fmt.Sprintf(f, v) + "|")
+	}
+
+	salida += "\n+"
+	for c := 0; c < int(cantColumnas); c++ {
+		salida += Cadena(strings.Repeat("-", maxLargos[c]+2) + "+")
+	}
+	salida += "\n"
+
+	for _, fila := range filas {
+		salida += "|"
+		for c := 0; c < int(cantColumnas); c++ {
+			f := fmt.Sprintf(" %%-%ds ", maxLargos[c])
+			var v Cadena
+			if c < len(fila) {
+				v = fila[c].CadenaAplicarEstilos(formatoF)
+			} else {
+				v = "N/A"
+			}
+			salida += Cadena(fmt.Sprintf(f, v) + "|")
+		}
+		salida += "\n"
+	}
+	salida += "+"
+	for c := 0; c < int(cantColumnas); c++ {
+		salida += Cadena(strings.Repeat("-", maxLargos[c]+2) + "+")
+	}
+	salida += "\n"
+
+	return salida
+}
 func Tabla(encabezados []string, filas [][]string) string {
 	cantColumnas := float64(len(encabezados))
 	var maxLargos map[int]int = make(map[int]int)
