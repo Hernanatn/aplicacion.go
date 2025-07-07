@@ -106,26 +106,26 @@ func (c *comando) DescifrarOpciones(opciones []string) (Parametros, Opciones, Ar
 	banderas := make([]string, 0)
 	argumentos := make([]any, 0)
 
-	for i, m := range opciones {
-		switch {
-		case strings.Contains(m, "--"), strings.Contains(m, "-"):
-			switch {
-			case slices.Contains(c.Opciones, m):
-				banderas = append(opciones, utiles.Limpiar(m))
-			default:
-				var j int
-				for k, p := range opciones[i+1:] {
-					if strings.Contains(p, "--") || strings.Contains(p, "-") {
-						j = k
-						parametros[m] = opciones[i+1 : j+i+1]
-						break
-					}
+	i := 0
+	for i < len(opciones) {
+		m := opciones[i]
+		if strings.HasPrefix(m, "--") || strings.HasPrefix(m, "-") {
+			if slices.Contains(c.Opciones, m) {
+				banderas = append(banderas, utiles.Limpiar(m))
+				i++
+			} else {
+				j := i + 1
+				for j < len(opciones) && !(strings.HasPrefix(opciones[j], "--") || strings.HasPrefix(opciones[j], "-")) {
+					j++
 				}
+				parametros[utiles.Limpiar(m)] = opciones[i+1 : j]
+				i = j
 			}
-		default:
-			argumentos = append(argumentos, utiles.Limpiar(m))
-		}
+		} else {
 
+			argumentos = append(argumentos, utiles.Limpiar(m))
+			i++
+		}
 	}
 	return parametros, banderas, argumentos
 }
@@ -161,7 +161,7 @@ func (c comando) DevolverAliases() []string {
 	return c.Aliases
 }
 
-func NuevoComando(nombre string, uso string, aliases []string, descripcion string, accion Accion, opciones []string, config ...Config) Comando {
+func NuevoComando(nombre string, uso string, aliases []string, descripcion string, accion Accion, opciones []string, config ...Config) *comando {
 
 	cfg := Config{
 		EsOculto: false,
@@ -169,7 +169,7 @@ func NuevoComando(nombre string, uso string, aliases []string, descripcion strin
 	if len(config) > 0 {
 		cfg = config[0]
 	}
-	return &comando{
+	c := &comando{
 
 		Nombre:      nombre,
 		Uso:         uso,
@@ -179,6 +179,22 @@ func NuevoComando(nombre string, uso string, aliases []string, descripcion strin
 		Opciones:    opciones,
 		Oculto:      cfg.EsOculto,
 	}
+
+	c.RegistrarComando(
+		&comando{
+			Nombre:      "ayuda",
+			Uso:         "ayuda",
+			Aliases:     []string{"-a", "-h"},
+			Descripcion: "Imprime la ayuda.",
+			accion: Accion(
+				func(con Consola, opciones Opciones, parametros Parametros, argumentos ...any) (res any, cod CodigoError, err error) {
+					c.Ayuda(con, opciones...)
+					return nil, EXITO, nil
+				}),
+			Opciones: []string{},
+			Oculto:   false})
+
+	return c
 }
 
 func AccionNula(f func()) Accion {

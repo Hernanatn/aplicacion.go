@@ -150,19 +150,19 @@ func (c consola) ImprimirBytes(b []byte) error {
 
 // Escribe la Cadena al buffer
 func (c consola) EscribirCadena(cadena Cadena) error {
-	_, err := c.Writer.WriteString(cadena.S())
+	_, err := c.Salida.WriteString(cadena.S())
 	return err
 }
 
 // Escribe la Cadena +\r\n al buffer
 func (c consola) EscribirLinea(cadena Cadena) error {
-	_, err := c.Writer.WriteString(cadena.S() + "\r\n")
+	_, err := c.Salida.WriteString(cadena.S() + "\r\n")
 	return err
 }
 
 // Escribe los bytes al buffer
 func (c consola) EscribirBytes(b []byte) error {
-	_, err := c.Writer.Write(b)
+	_, err := c.Salida.Write(b)
 	return err
 }
 
