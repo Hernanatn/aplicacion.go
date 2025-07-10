@@ -77,6 +77,7 @@ func (c comando) Ayuda(con Consola, args ...string) {
 		for _, o := range c.Opciones {
 			con.EscribirLinea(Cadena("  " + o))
 		}
+		con.EscribirLinea("")
 	}
 
 	con.Imprimir()
