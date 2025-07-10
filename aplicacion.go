@@ -109,6 +109,7 @@ func (a *aplicacion) Ayuda(_ Consola, args ...string) {
 		for _, o := range a.Opciones {
 			a.consola.EscribirCadena(Cadena("  " + o))
 		}
+		a.consola.EscribirLinea("")
 	}
 	a.consola.Imprimir()
 }
