@@ -1,9 +1,8 @@
-//go:build !windows
+//go:build windows
 
 /*
 Utilidades de formateo de cadenas para escribir a terminales.
 */
-
 package consola
 
 import (
@@ -13,11 +12,13 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"runtime"
 	"strings"
 
 	"github.com/hernanatn/aplicacion.go/consola/cadena"
 
 	"github.com/schollz/progressbar/v3"
+	"golang.org/x/sys/windows"
 	"golang.org/x/term"
 )
 
@@ -218,6 +219,13 @@ func NuevaEntradaSalida(
 }
 
 func NuevaConsola(fe *os.File, fs *os.File) *consola {
+	if strings.Contains(runtime.GOOS, "windows") {
+		salida := windows.Handle(fs.Fd())
+		var modoOriginal uint32
+
+		windows.GetConsoleMode(salida, &modoOriginal)
+		windows.SetConsoleMode(salida, modoOriginal|windows.ENABLE_VIRTUAL_TERMINAL_PROCESSING)
+	}
 	return &consola{
 		EntradaSalida: *NuevaEntradaSalida(fe, fs),
 	}
