@@ -64,10 +64,12 @@ func (c comando) TextoAyuda() string {
 }
 
 func (c comando) Ayuda(con Consola, args ...string) {
-	con.EscribirLinea(Cadena("Ayuda").Negrita().Subrayada())
+	con.ImprimirCadena(Cadena(cadena.Titulo(c.Nombre)))
+	con.ImprimirCadena(Cadena(cadena.Subtitulo(c.Descripcion)))
 	con.EscribirLinea(Cadena("Uso:"))
 	con.EscribirLinea(Cadena("\t" + c.Uso))
-	con.EscribirLinea("Comandos:")
+	//con.EscribirLinea(Cadena("Ayuda").Negrita().Subrayada())
+	con.EscribirLinea("Subcomandos:")
 
 	for _, c := range c.comandos {
 		if !c.EsOculto() {

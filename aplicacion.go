@@ -95,11 +95,17 @@ func (a aplicacion) TextoAyuda() string {
 }
 
 func (a *aplicacion) Ayuda(_ Consola, args ...string) {
+	if len(args) > 0 {
+		c, existe := a.buscarComando(args[0])
+		if existe {
+			c.Ayuda(a, args[:1]...)
+		}
+	}
 	a.ImprimirCadena(Cadena(cadena.Titulo(a.Nombre)))
 	a.ImprimirCadena(Cadena(cadena.Subtitulo(a.Descripcion)))
 	a.consola.EscribirLinea(Cadena("Uso:"))
 	a.consola.EscribirLinea(Cadena("\t" + a.Uso))
-	a.consola.EscribirLinea(Cadena("Ayuda").Negrita().Subrayada())
+	//a.consola.EscribirLinea(Cadena("Ayuda").Negrita().Subrayada())
 	a.consola.EscribirLinea(Cadena("Comandos:"))
 	for _, c := range a.comandos {
 		if !c.EsOculto() && !slices.Contains(args, "-v") {
