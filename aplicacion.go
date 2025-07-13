@@ -97,6 +97,8 @@ func (a aplicacion) TextoAyuda() string {
 func (a *aplicacion) Ayuda(_ Consola, args ...string) {
 	a.ImprimirCadena(Cadena(cadena.Titulo(a.Nombre)))
 	a.ImprimirCadena(Cadena(cadena.Subtitulo(a.Descripcion)))
+	a.consola.EscribirLinea(Cadena("Uso:"))
+	a.consola.EscribirLinea(Cadena("\t" + a.Uso))
 	a.consola.EscribirLinea(Cadena("Ayuda").Negrita().Subrayada())
 	a.consola.EscribirLinea(Cadena("Comandos:"))
 	for _, c := range a.comandos {
@@ -107,7 +109,7 @@ func (a *aplicacion) Ayuda(_ Consola, args ...string) {
 	if len(a.Opciones) > 0 {
 		a.consola.EscribirLinea(Cadena("Opciones Generales:"))
 		for _, o := range a.Opciones {
-			a.consola.EscribirCadena(Cadena("  " + o))
+			a.consola.EscribirCadena(Cadena("\t" + o))
 		}
 		a.consola.EscribirLinea("")
 	}

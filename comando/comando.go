@@ -65,6 +65,8 @@ func (c comando) TextoAyuda() string {
 
 func (c comando) Ayuda(con Consola, args ...string) {
 	con.EscribirLinea(Cadena("Ayuda").Negrita().Subrayada())
+	con.EscribirLinea(Cadena("Uso:"))
+	con.EscribirLinea(Cadena("\t" + c.Uso))
 	con.EscribirLinea("Comandos:")
 
 	for _, c := range c.comandos {
@@ -73,13 +75,12 @@ func (c comando) Ayuda(con Consola, args ...string) {
 		}
 	}
 	if len(c.Opciones) > 0 {
-		con.EscribirLinea("Opciones Generales:")
+		con.EscribirLinea(Cadena("Opciones Generales:"))
 		for _, o := range c.Opciones {
-			con.EscribirLinea(Cadena("  " + o))
+			con.EscribirCadena(Cadena("\t" + o))
 		}
 		con.EscribirLinea("")
 	}
-
 	con.Imprimir()
 }
 
