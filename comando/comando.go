@@ -59,17 +59,20 @@ type comando struct {
 }
 
 func (c comando) TextoAyuda() string {
-	nombre := c.Nombre + " (" + strings.Join(c.Aliases, ",") + ") "
+	nombre := c.Nombre
+	if len(c.Aliases) > 0 {
+		nombre += " (" + strings.Join(c.Aliases, ",") + ") "
+	}
 	return nombre + cadena.TextoJustificado(c.Descripcion, 40, cadena.OpcionesFormato{Sangria: strings.Repeat(" ", 40-len(nombre)-2), Prefijo: strings.Repeat(" ", 40), Color: color.GrisFuente}) + "\n"
 }
 
 func (c comando) Ayuda(con Consola, args ...string) {
 	con.ImprimirCadena(Cadena(cadena.Titulo(c.Nombre)))
 	con.ImprimirCadena(Cadena(cadena.Subtitulo(c.Descripcion)))
-	con.EscribirLinea(Cadena("Uso:"))
+	con.EscribirLinea(Cadena("Uso:").Subrayada())
 	con.EscribirLinea(Cadena("\t" + c.Uso))
 	//con.EscribirLinea(Cadena("Ayuda").Negrita().Subrayada())
-	con.EscribirLinea("Subcomandos:")
+	con.EscribirLinea(cadena.CadenaFmt("Subcomandos:").Subrayada())
 
 	for _, c := range c.comandos {
 		if !c.EsOculto() {
@@ -77,7 +80,7 @@ func (c comando) Ayuda(con Consola, args ...string) {
 		}
 	}
 	if len(c.Opciones) > 0 {
-		con.EscribirLinea(Cadena("Opciones Generales:"))
+		con.EscribirLinea(Cadena("Opciones Generales:").Subrayada())
 		for _, o := range c.Opciones {
 			con.EscribirCadena(Cadena("\t" + o))
 		}
@@ -135,16 +138,19 @@ func (c *comando) DescifrarOpciones(opciones []string) (Parametros, Opciones, Ar
 }
 
 func (c *comando) Ejecutar(consola Consola, opciones ...string) (res any, cod CodigoError, err error) {
-
 	if len(opciones) > 0 {
 		sc, existe := c.buscarSubComando(opciones[0])
 		if existe {
+			if sc.DevolverNombre() == "ayuda" {
+				c.Ayuda(consola, opciones[1:]...)
+				return nil, EXITO, nil
+			}
 			return sc.Ejecutar(consola, opciones[1:]...)
 		}
 	}
 	parametros, banderas, argumentos := c.DescifrarOpciones(opciones)
 	if c.accion == nil {
-		c.Ayuda(consola)
+		c.Ayuda(consola, opciones...)
 		return nil, EXITO, nil
 	}
 	return c.accion(consola, banderas, parametros, argumentos...)

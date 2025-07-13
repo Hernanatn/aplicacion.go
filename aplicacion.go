@@ -103,17 +103,17 @@ func (a *aplicacion) Ayuda(_ Consola, args ...string) {
 	}
 	a.ImprimirCadena(Cadena(cadena.Titulo(a.Nombre)))
 	a.ImprimirCadena(Cadena(cadena.Subtitulo(a.Descripcion)))
-	a.consola.EscribirLinea(Cadena("Uso:"))
+	a.consola.EscribirLinea(Cadena("Uso:").Subrayada())
 	a.consola.EscribirLinea(Cadena("\t" + a.Uso))
 	//a.consola.EscribirLinea(Cadena("Ayuda").Negrita().Subrayada())
-	a.consola.EscribirLinea(Cadena("Comandos:"))
+	a.consola.EscribirLinea(Cadena("Comandos:").Subrayada())
 	for _, c := range a.comandos {
 		if !c.EsOculto() && !slices.Contains(args, "-v") {
 			a.consola.EscribirCadena(Cadena("  " + c.TextoAyuda()))
 		}
 	}
 	if len(a.Opciones) > 0 {
-		a.consola.EscribirLinea(Cadena("Opciones Generales:"))
+		a.consola.EscribirLinea(Cadena("Opciones Generales:").Subrayada())
 		for _, o := range a.Opciones {
 			a.consola.EscribirCadena(Cadena("\t" + o))
 		}
@@ -183,12 +183,16 @@ func (a *aplicacion) Ejecutar(_ Consola, opciones ...string) (res any, cod coman
 	if len(opciones) > 0 {
 		sc, existe := a.buscarComando(opciones[0])
 		if existe {
+			if sc.DevolverNombre() == "ayuda" {
+				a.Ayuda(a, opciones[1:]...)
+				return nil, comando.EXITO, nil
+			}
 			return sc.Ejecutar(a, opciones[1:]...)
 		}
 	}
 	parametros, banderas, argumentos := a.DescifrarOpciones(opciones)
 	if a.accion == nil {
-		a.Ayuda(a)
+		a.Ayuda(a, opciones...)
 		return nil, comando.EXITO, nil
 	}
 	return a.accion(a, banderas, parametros, argumentos...)

@@ -203,7 +203,7 @@ func TestComandosIntegrados(t *testing.T) {
 	)
 
 	// Probar comando de ayuda
-	_, _, _ = app.Ejecutar(con, "ayuda")
+	_, _, _ = app.Ejecutar(con, "ayuda", "juan")
 	b := make([]byte, 100)
 	app.FSalida().Read(b)
 	t.Log((b))
@@ -241,9 +241,17 @@ func TestManejoDeErrores(t *testing.T) {
 
 	app.RegistrarComando(cmdPrueba)
 
-	_, codigo, err := app.Ejecutar(nil, "cmd-prueba")
+	_, codigo, err := app.Ejecutar(nil, "cmd-prueba", "juan")
 	assert.Equal(t, comando.ERROR, codigo)
 	assert.Equal(t, os.ErrNotExist, err)
+
+	var buf bytes.Buffer
+	io.Copy(&buf, os.Stdout)
+	con := consola.NuevaConsola(os.Stdin, os.Stdout)
+	_, _, _ = app.Ejecutar(con, "ayuda", "cmd-prueba")
+	b := make([]byte, 100)
+	app.FSalida().Read(b)
+	t.Log((b))
 }
 
 // TestComandosAnidados prueba la funcionalidad de comandos anidados
