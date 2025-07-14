@@ -54,6 +54,9 @@ type Aplicacion interface {
 	Finalizar(...string) error
 
 	Leer(Cadena) (Cadena, error)
+	LeerPrefijo(Cadena, Cadena) (Cadena, error)
+	Prefijo() Cadena
+	ActualizarPrefijo(Cadena)
 
 	RegistrarInicio(f FUN) Aplicacion
 	RegistrarLimpieza(f FUN) Aplicacion
@@ -70,6 +73,7 @@ type aplicacion struct {
 	accion      comando.Accion
 	Opciones    []string
 
+	prefijo    Cadena
 	consola    Consola
 	comandos   []Comando
 	debeCerrar bool
@@ -132,7 +136,12 @@ func (a aplicacion) DevolverNombre() string {
 func (a aplicacion) DevolverAliases() []string {
 	return []string{a.Nombre}
 }
-
+func (a aplicacion) Prefijo() Cadena {
+	return a.prefijo
+}
+func (a *aplicacion) ActualizarPrefijo(p Cadena) {
+	a.prefijo = p
+}
 func (a *aplicacion) RegistrarComando(sub Comando) Aplicacion {
 	sub.AsignarPadre(a)
 	a.comandos = append(a.comandos, sub)
@@ -212,7 +221,14 @@ func (a *aplicacion) RegistrarFinal(f FUN) Aplicacion {
 }
 
 func (a aplicacion) Leer(c Cadena) (Cadena, error) {
-	return a.consola.Leer(c)
+	if a.Prefijo().Limpiar().S() == "" {
+		return a.consola.Leer(c)
+	}
+	return a.consola.LeerPrefijo(a.Prefijo(), c)
+}
+
+func (a aplicacion) LeerPrefijo(_ Cadena, c Cadena) (Cadena, error) {
+	return a.consola.LeerPrefijo(a.Prefijo(), c)
 }
 
 func (e aplicacion) Read(p []byte) (n int, err error) {
@@ -342,6 +358,7 @@ func NuevaAplicacion(nombre string, uso string, descripcion string, opciones []s
 		Descripcion: descripcion,
 		Opciones:    opciones,
 		consola:     consola,
+		prefijo:     "",
 	}
 
 	a.RegistrarComando(

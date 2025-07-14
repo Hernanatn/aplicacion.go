@@ -50,6 +50,7 @@ type EntradaSalida struct {
 type Consola interface {
 	io.ReadWriter
 	Leer(Cadena) (Cadena, error)
+	LeerPrefijo(Cadena, Cadena) (Cadena, error)
 	LeerContraseña(Cadena) (Cadena, error)
 	LeerTecla(*[]byte) (int, error)
 
@@ -87,6 +88,17 @@ func (c consola) Leer(mensaje Cadena) (Cadena, error) {
 
 	return Cadena(s).Limpiar(), nil
 }
+
+func (c consola) LeerPrefijo(p Cadena, mensaje Cadena) (Cadena, error) {
+	c.ImprimirCadena(cadena.Señalador("> ("+p.S()+")") + mensaje + Cadena(": "))
+	s, err := c.Entrada.ReadString('\n')
+	if err != nil {
+		return Cadena("\n"), err
+	}
+
+	return Cadena(s).Limpiar(), nil
+}
+
 func (c consola) LeerContraseña(mensaje Cadena) (Cadena, error) {
 	c.ImprimirCadena(cadena.Señalador(">") + mensaje + Cadena(": "))
 	viejo, _ := term.MakeRaw(int(c.EntradaSalida.Entrada.Fd()))
